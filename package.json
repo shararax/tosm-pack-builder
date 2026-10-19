@@ -1,0 +1,7 @@
+{
+  "name": "tosm-pack-builder",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": { "@supabase/supabase-js": "2.45.4" }
+}
