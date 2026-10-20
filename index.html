@@ -2055,7 +2055,7 @@ $("#sim").addEventListener("click", e => {
 });
 
 /* ---------- home: dashboard of promotion folders ---------- */
-const HV = { q:"", period:"all", from:"", to:"", sort:"updated", menu:null, armed:null, rename:null };
+const HV = { q:"", period:"all", from:"", to:"", sort:"start", menu:null, armed:null, rename:null };
 const FOLDER_COLORS = ["#c9861a","#3b7dd8","#1f8a5b","#8a55d1","#c2459b","#0f9e9e","#d4572a","#5a6fd6"];
 const folderColor = f => f.color || FOLDER_COLORS[[...f.id].reduce((a,c) => a + c.charCodeAt(0), 0) % FOLDER_COLORS.length];
 const dayStart = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
@@ -2091,8 +2091,10 @@ function renderHome(){
   const keepFocus = document.activeElement?.id;
   const q = HV.q.trim().toLowerCase(), w = periodWindow();
   let folders = S.folders.filter(f => overlaps(folderRange(f), w) && (!q || f.name.toLowerCase().includes(q) || f.packs.some(p => p.name.toLowerCase().includes(q))));
-  const sorters = { updated:(a,b) => b.updated - a.updated, start:(a,b) => (folderRange(a)?.[0] || 8.64e15) - (folderRange(b)?.[0] || 8.64e15), name:(a,b) => a.name.localeCompare(b.name, "th") };
-  folders.sort(sorters[HV.sort] || sorters.updated);
+  /* default: newest sale start first; folders without dates yet (drafts) stay on top so new work is easy to find */
+  const startOf = f => folderRange(f)?.[0]?.getTime() ?? Infinity;
+  const sorters = { start:(a,b) => (startOf(b) - startOf(a)) || (b.updated - a.updated), updated:(a,b) => b.updated - a.updated, name:(a,b) => a.name.localeCompare(b.name, "th") };
+  folders.sort(sorters[HV.sort] || sorters.start);
   const hits = q ? S.folders.flatMap(f => f.packs.filter(p => p.name.toLowerCase().includes(q) && overlaps(packRange(p), w)).map(p => ({ f, p }))) : [];
   const live = S.folders.filter(f => folderStatus(f).k === "live").length, soon = S.folders.filter(f => folderStatus(f).k === "soon").length;
   const totalPacks = S.folders.reduce((a,f) => a + f.packs.length, 0);
@@ -2135,7 +2137,7 @@ function renderHome(){
       <input class="search hm-q" id="hm-q" type="search" placeholder="ค้นหาชื่อโฟลเดอร์ หรือชื่อแพ็ก" value="${esc(HV.q)}" autocomplete="off">
       <div class="hm-period" role="group" aria-label="ช่วงเวลาขาย">${chip("all","ทั้งหมด")}${chip("now","กำลังขายตอนนี้")}${chip("month","เดือนนี้")}${chip("next","เดือนหน้า")}${chip("custom","กำหนดเอง")}</div>
       ${HV.period === "custom" ? `<div class="hm-range"><input type="date" id="hm-from" value="${esc(HV.from)}" aria-label="ตั้งแต่"><span>ถึง</span><input type="date" id="hm-to" value="${esc(HV.to)}" aria-label="ถึง"></div>` : ""}
-      <select id="hm-sort" aria-label="เรียงลำดับ"><option value="updated"${HV.sort==="updated"?" selected":""}>แก้ไขล่าสุด</option><option value="start"${HV.sort==="start"?" selected":""}>วันเริ่มขาย</option><option value="name"${HV.sort==="name"?" selected":""}>ชื่อ ก–ฮ</option></select>
+      <select id="hm-sort" aria-label="เรียงลำดับ"><option value="start"${HV.sort==="start"?" selected":""}>วันขายใหม่สุดก่อน</option><option value="updated"${HV.sort==="updated"?" selected":""}>แก้ไขล่าสุด</option><option value="name"${HV.sort==="name"?" selected":""}>ชื่อ ก–ฮ</option></select>
     </div>
     ${hits.length ? `<section class="hm-hits"><h2>แพ็กที่ตรงกับ “${esc(HV.q)}” (${hits.length})</h2>
       ${hits.slice(0, 30).map(({f,p}) => { const r = calc(p), pr = packRange(p);
