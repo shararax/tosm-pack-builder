@@ -900,6 +900,32 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-sold-r small{display:block;font-size:11px;color:var(--muted)}
 .iv-empty{padding:40px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
 
+
+/* team summary tab (presentation) */
+.sh-tab.sum{margin-left:auto}
+.sm-wrap{display:flex;flex-direction:column;gap:10px}
+.sm-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.sm-bar p{margin:0;font-size:13px;color:#5b5e66}
+.sm-scroll{overflow-x:auto;border-radius:8px}
+.sm-t{width:100%;border-collapse:collapse;font:14px "Kanit",var(--f-body);color:#2a2a2a;min-width:720px}
+.sm-t th{background:#c9971f;color:#fff;font-weight:600;padding:7px 10px;text-align:center;white-space:nowrap}
+.sm-t th.l{text-align:left}
+.sm-t td{padding:5px 10px;border-bottom:1px solid #f3e2b4;vertical-align:middle}
+.sm-t tr.a td{background:#fffaf0}
+.sm-t tr.b td{background:#fdeec8}
+.sm-t tr.first td{border-top:2px solid #e9cf8a}
+.sm-t td.no{text-align:center;font-weight:600;width:40px}
+.sm-t td.ic{width:36px;padding-right:0}
+.sm-t td.ic .ico{width:28px;height:28px}
+.sm-t td.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sm-t td small{display:block;font-size:11px;color:#7a6a40;white-space:nowrap}
+.sm-t td small.pn{max-width:150px;overflow:hidden;text-overflow:ellipsis;margin-left:auto}
+.sm-t .rt{display:inline-block;margin-left:8px;font-size:11px;background:#ece3fb;color:#6b3fc0;border-radius:999px;padding:0 7px}
+.sm-t .muted{color:#9a9a9a}
+.sm-t td.money{font-weight:600}
+.sm-t tfoot td{background:#fff;border:0;padding-top:8px}
+.sm-t tfoot td.note{font-size:12px;color:#7a6a40}
+.sm-t tfoot td.grand{background:#f29b0f;color:#fff;border-radius:4px}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -2459,7 +2485,8 @@ function shopCard(p, team){ const r = calc(p), rl = resetLabel(p), dc = discClas
     </div>`; }
 function renderPresent(){
   const cats = catsInUse(S.packs);
-  if (PV.cat !== "All" && !cats.includes(PV.cat)) PV.cat = "All";
+  if (PV.cat === "__summary" && !PV.team) PV.cat = "All";
+  if (PV.cat !== "All" && PV.cat !== "__summary" && !cats.includes(PV.cat)) PV.cat = "All";
   const list = S.packs.map((p, i) => ({ p, i })).filter(o => PV.cat === "All" || catOf(o.p) === PV.cat)
     .sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(o => o.p);
   const card = p => shopCard(p, PV.team);
@@ -2473,13 +2500,63 @@ function renderPresent(){
       <div class="sh-tabs" role="group" aria-label="หมวดหมู่">
         <button class="sh-tab" data-shopcat="All" aria-pressed="${PV.cat === "All"}">All</button>
         ${cats.map(c => `<button class="sh-tab" data-shopcat="${esc(c)}" aria-pressed="${PV.cat === c}">${esc(catLabel(c))}</button>`).join("")}
+        ${PV.team ? `<button class="sh-tab sum" data-shopcat="__summary" aria-pressed="${PV.cat === "__summary"}">📋 สรุป</button>` : ""}
       </div>
-      ${list.length ? `<div class="sh-grid">${list.map(card).join("")}</div>` : `<div class="sh-empty">ยังไม่มีแพ็กในหมวดนี้</div>`}
+      ${PV.cat === "__summary" ? summaryHTML() : list.length ? `<div class="sh-grid">${list.map(card).join("")}</div>` : `<div class="sh-empty">ยังไม่มีแพ็กในหมวดนี้</div>`}
     </div>
     ${PV.open ? modalHTML(S.packs.find(p => p.id === PV.open)) : ""}
   </div>`;
 }
 
+/* team summary: every pack in display order — items, price, limit, how much one ID gets and pays if it buys the full limit */
+function summaryRows(){
+  return S.packs.map((p, i) => ({ p, i })).sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(({ p }) => {
+    const rnd = p.mode === "random", ri = resetInfo(p), lim = n(p.limit);
+    const rounds = ri.on ? ri.periods : 1;                     // null when Reset is on but there is no end date
+    const buys = lim > 0 && rounds ? lim * rounds : null;
+    const W = rnd ? p.items.reduce((a, x) => a + (x.fixed ? 0 : n(x.chance)), 0) : 0;
+    const items = p.items.map(x => { const share = !rnd || x.fixed ? 1 : W > 0 ? n(x.chance) / W : 0;
+      return { x, rand:rnd && !x.fixed, sum: buys == null ? null : n(x.amt) * share * buys }; });
+    return { p, rnd, ri, lim, rounds, buys, items, paid: buys == null ? null : n(p.price) * buys };
+  });
+}
+function summaryHTML(){
+  const R = summaryRows();
+  if (!R.length) return `<div class="sh-empty">ยังไม่มีแพ็ก</div>`;
+  const tPrice = R.reduce((a, r) => a + n(r.p.price), 0), tPaid = R.reduce((a, r) => a + (r.paid || 0), 0), open = R.filter(r => r.paid == null).length;
+  const amt = v => fmt(v, v % 1 ? 1 : 0);
+  const body = R.map((r, k) => { const rows = Math.max(1, r.items.length), cls = k % 2 ? "b" : "a";
+    const limTxt = r.lim > 0 ? `${fmt(r.lim, 0)}${r.ri.on ? `<small>${r.rounds ? `ต่อรอบ × ${r.rounds} รอบ` : "ต่อรอบ · ยังไม่มีวันจบ"}</small>` : ""}` : `<small>ไม่จำกัด</small>`;
+    const head = `<td class="no" rowspan="${rows}">${k + 1}</td>`, tail = (cells) => cells;
+    const first = r.items[0];
+    const itemCells = it => !it ? `<td></td><td class="nm"><span class="muted">ยังไม่มีไอเทม</span></td><td class="r"></td>` : (() => { const m = BYID.get(it.x.itemId);
+      return `<td class="ic">${icon(m?.img, m?.grade, it.x.name, "ico sm")}</td>
+        <td class="nm">${esc(it.x.name || "(ไม่มีชื่อ)")}${it.rand ? `<span class="rt">สุ่ม ${fmt(n(it.x.chance), 4)}%</span>` : ""}</td>
+        <td class="r">${fmt(n(it.x.amt), 0)}</td>`; })();
+    const sumCell = it => `<td class="r">${!it || it.sum == null ? "–" : (it.rand ? "≈ " : "") + amt(it.sum)}</td>`;
+    const packCells = `<td class="r money" rowspan="${rows}">฿${fmt(n(r.p.price), 2)}<small class="pn">${esc(r.p.name)}</small></td><td class="r" rowspan="${rows}">${limTxt}</td>`;
+    const paidCell = `<td class="r money" rowspan="${rows}">${r.paid == null ? "–" : "฿" + fmt(r.paid, 2)}</td>`;
+    return [`<tr class="${cls} first">${head}${itemCells(first)}${packCells}${sumCell(first)}${paidCell}</tr>`,
+      ...r.items.slice(1).map(it => `<tr class="${cls}">${itemCells(it)}${sumCell(it)}</tr>`)].join("");
+  }).join("");
+  return `<div class="sm-wrap">
+    <div class="sm-bar"><p>${R.length} แพ็ก · Sum Amt และ Total Paid = ซื้อครบ Limit ${R.some(r => r.ri.on) ? "ตลอดโปร (รวมทุกรอบ Reset)" : ""} ต่อ 1 ID${R.some(r => r.rnd) ? " · ของสุ่มแสดงจำนวนเฉลี่ย (≈)" : ""}</p>
+      <button class="sh-back" id="sm-copy">คัดลอกไปวางใน Sheet</button></div>
+    <div class="sm-scroll"><table class="sm-t">
+      <thead><tr><th>No</th><th></th><th class="l">ไอเทม</th><th>Amt</th><th>ราคา</th><th>Limit</th><th>Sum Amt</th><th>Total Paid</th></tr></thead>
+      <tbody>${body}</tbody>
+      <tfoot><tr><td colspan="4"></td><td class="r money">฿${fmt(tPrice, 2)}</td><td colspan="2" class="r note">${open ? `ไม่รวม ${open} แพ็กที่ไม่จำกัด` : ""}</td><td class="r money grand">฿${fmt(tPaid, 2)}</td></tr></tfoot>
+    </table></div></div>`;
+}
+async function copySummary(){
+  const R = summaryRows(), out = [["No","Item","Amt","Chance","Price (THB)","Limit","Rounds","Sum Amt","Total Paid"].join("\t")];
+  R.forEach((r, k) => (r.items.length ? r.items : [null]).forEach((it, j) => out.push([
+    j ? "" : k + 1, it ? it.x.name : "", it ? n(it.x.amt) : "", it && it.rand ? n(it.x.chance) + "%" : "",
+    j ? "" : n(r.p.price), j ? "" : (r.lim > 0 ? r.lim : "ไม่จำกัด"), j ? "" : (r.ri.on ? r.rounds ?? "" : 1),
+    it && it.sum != null ? +it.sum.toFixed(2) : "", j ? "" : (r.paid ?? "")].join("\t"))));
+  out.push(["", "รวม", "", "", R.reduce((a, r) => a + n(r.p.price), 0), "", "", "", R.reduce((a, r) => a + (r.paid || 0), 0)].join("\t"));
+  try { await navigator.clipboard.writeText(out.join("\n")); toast("คัดลอกตารางสรุปแล้ว วางใน Google Sheet ได้เลย"); } catch { toast("คัดลอกไม่ได้"); }
+}
 function modalHTML(p){
   if (!p) return "";
   const r = calc(p), rnd = p.mode === "random", ri = resetInfo(p), rl = resetLabel(p);
@@ -2537,6 +2614,7 @@ function modalHTML(p){
 $("#view-present").addEventListener("click", e => {
   if (e.target.id === "sh-ov" || e.target.closest("[data-shclose]")) { PV.open = null; renderPresent(); return; }
   if (e.target.closest("#sh-order")) { toast("หน้านี้เป็นตัวอย่าง ยังสั่งซื้อไม่ได้"); return; }
+  if (e.target.closest("#sm-copy")) { copySummary(); return; }
   const b = e.target.closest("button");
   if (b?.dataset.pview) { PV.team = b.dataset.pview === "team"; renderPresent(); return; }
   if (b?.dataset.shopcat) { PV.cat = b.dataset.shopcat; renderPresent(); return; }
