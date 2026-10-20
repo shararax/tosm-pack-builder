@@ -900,11 +900,6 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-sold-r small{display:block;font-size:11px;color:var(--muted)}
 .iv-empty{padding:40px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
 
-
-.ann{color:var(--accent);font-weight:600;white-space:nowrap}
-.anndp{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
-.anndp button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:2px 9px;font-size:11px;cursor:pointer}
-.anndp button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#1b1100;font-weight:600}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -1588,15 +1583,6 @@ function paintIssues(root = document.getElementById("view-build")){
 }
 const discClass = d => !isFinite(d) ? "" : d >= .8 ? "disc-good" : d >= .5 ? "disc-mid" : "disc-low";
 const verdict = d => !isFinite(d) ? "รอข้อมูล" : d >= .8 ? "คุ้มมาก" : d >= .5 ? "คุ้ม" : d >= 0 ? "คุ้มน้อย" : "แพงกว่ามูลค่า";
-/* announced rate = the real rate rounded for news posts and the shop card; it is always derived, never typed */
-const annDp = p => [0, 1, 2, 3].includes(p?.rateDp) ? p.rateDp : 2;
-function annRate(ch, dp){
-  if (!(ch > 0)) return null;
-  for (let d = dp; d <= 6; d++) { const v = Math.round(ch * 10 ** d + 1e-9) / 10 ** d; if (v > 0) return { v, d }; }   // a tiny rate keeps more decimals instead of showing 0%
-  return { v:ch, d:6 };
-}
-const annTxt = (ch, dp) => { const a = annRate(ch, dp); return a ? a.v.toFixed(a.d) + "%" : "–"; };
-const annSum = p => { const dp = annDp(p); return p.items.reduce((a, x) => a + (x.fixed ? 0 : (annRate(n(x.chance), dp)?.v || 0)), 0); };
 const odds = c => c > 0 ? (100 / c >= 10 ? "1 ใน " + fmt(Math.round(100 / c), 0) : "") : "";
 
 /* ---------- editor ---------- */
@@ -1702,28 +1688,27 @@ function renderEditor(){
       const fixedIdx = [], randIdx = [];
       p.items.forEach((x,i) => (x.fixed ? fixedIdx : randIdx).push(i));
       const fixedRow = i => { const x = p.items[i], c = r.rows[i];
-        return `<tr data-row="${i}">${grip}<td>${itemCell(x,i)}</td><td class="r">${inp(x,i,"amt")}</td><td class="r"><span class="pill">ได้แน่นอน</span></td><td class="r num ann">–</td>
+        return `<tr data-row="${i}">${grip}<td>${itemCell(x,i)}</td><td class="r">${inp(x,i,"amt")}</td><td class="r"><span class="pill">ได้แน่นอน</span></td>
           <td class="r">${inp(x,i,"tp")}</td>${val(c,i)}<td class="r num">–</td>
           <td><div class="acts"><button class="mv" data-move="${i}" title="ย้ายไปกลุ่มของสุ่ม">↓ สุ่ม</button>${del(i)}</div></td></tr>`; };
       const randRow = i => { const x = p.items[i], c = r.rows[i], ch = n(x.chance), w = r.maxChance > 0 ? Math.max(2, ch / r.maxChance * 100) : 0;
         return `<tr data-row="${i}">${grip}<td>${itemCell(x,i)}</td><td class="r">${inp(x,i,"amt")}</td>
           <td class="r"><div class="chcell"><span class="chbar"><i data-bar="${i}" style="width:${ch > 0 ? w : 0}%"></i></span>${inp(x,i,"chance")}</div><span class="odds" data-odds="${i}">${odds(ch)}</span></td>
-          <td class="r num ann" data-ann="${i}">${annTxt(ch, annDp(p))}</td>
           <td class="r">${inp(x,i,"tp")}</td>${val(c,i)}<td class="r num"><span data-c="ev" data-r="${i}">${fmt(c.ev,3)}</span></td>
           <td><div class="acts"><button class="mv" data-move="${i}" title="ย้ายไปกลุ่มของที่ได้แน่นอน">↑ แน่นอน</button>${del(i)}</div></td></tr>`; };
       const okSum = Math.abs(r.chanceSum - 100) < 0.0001;
       table = `<table>
-        <thead><tr><th></th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">โอกาส % (จริง)</th><th class="r" title="ปัดเศษจากโอกาสจริง ใช้ลงข่าวและแสดงบนการ์ดหน้าร้าน">เรทประกาศ</th><th class="r">TP / ชิ้น</th><th class="r">มูลค่า (THB)</th><th class="r">EV</th><th></th></tr></thead>
+        <thead><tr><th></th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">โอกาส %</th><th class="r">TP / ชิ้น</th><th class="r">มูลค่า (THB)</th><th class="r">EV</th><th></th></tr></thead>
         <tbody id="tbody">
-          <tr class="sec" data-sec="fixed"><td colspan="9"><div class="st"><b>ของที่ได้แน่นอน</b><span class="pill">${fixedIdx.length} รายการ</span>
+          <tr class="sec" data-sec="fixed"><td colspan="8"><div class="st"><b>ของที่ได้แน่นอน</b><span class="pill">${fixedIdx.length} รายการ</span>
             <span class="hint">ได้ทุกครั้งที่ซื้อ · มูลค่า ฿<span id="sec-fixed">${fmt(r.fixedTHB)}</span></span></div></td></tr>
-          ${fixedIdx.map(fixedRow).join("") || `<tr class="empty-row"><td colspan="9">ยังไม่มี · กด “↑ แน่นอน” ที่ไอเทมด้านล่าง หรือลากแถวมาวางที่หัวข้อนี้</td></tr>`}
-          <tr class="sec" data-sec="rand"><td colspan="9"><div class="st"><b>ของสุ่ม</b><span class="pill">${randIdx.length} รายการ</span>
+          ${fixedIdx.map(fixedRow).join("") || `<tr class="empty-row"><td colspan="8">ยังไม่มี · กด “↑ แน่นอน” ที่ไอเทมด้านล่าง หรือลากแถวมาวางที่หัวข้อนี้</td></tr>`}
+          <tr class="sec" data-sec="rand"><td colspan="8"><div class="st"><b>ของสุ่ม</b><span class="pill">${randIdx.length} รายการ</span>
             <span class="meter ${okSum ? "" : "warn"}" id="sec-meter"><i style="width:${Math.min(100, r.chanceSum)}%"></i></span>
             <span class="pill ${okSum ? "" : "warn"}" id="sec-sum">โอกาสรวม ${fmt(r.chanceSum,4)}% / 100%</span></div></td></tr>
-          ${randIdx.map(randRow).join("") || `<tr class="empty-row"><td colspan="9">คลิกไอเทมในคลังด้านซ้ายเพื่อเพิ่มเป็นของสุ่ม</td></tr>`}
+          ${randIdx.map(randRow).join("") || `<tr class="empty-row"><td colspan="8">คลิกไอเทมในคลังด้านซ้ายเพื่อเพิ่มเป็นของสุ่ม</td></tr>`}
         </tbody>
-        <tfoot><tr><td></td><td>รวม</td><td></td><td></td><td class="r num ann" id="t-ann" title="ผลรวมอาจไม่ใช่ 100% พอดีเพราะปัดเศษ">${fmt(annSum(p), 6)}%</td><td></td><td class="r num" id="t-thb">${fmt(r.thb)}</td><td class="r num" id="t-ev">${fmt(r.ev,3)}</td><td></td></tr></tfoot>
+        <tfoot><tr><td></td><td>รวม</td><td></td><td></td><td></td><td class="r num" id="t-thb">${fmt(r.thb)}</td><td class="r num" id="t-ev">${fmt(r.ev,3)}</td><td></td></tr></tfoot>
       </table>`;
     } else {
       const rows = p.items.map((x,i) => { const c = r.rows[i];
@@ -1744,8 +1729,7 @@ function renderEditor(){
         <button class="btn" id="btn-custom">+ ไอเทมนอกลิสต์</button>
         ${rnd ? `<button class="btn pri" id="btn-fill" title="แบ่งเรทที่เหลือให้ไอเทมสุ่มที่ยังไม่ได้ใส่เรท จนรวมครบ 100%">Fill Rate</button><button class="btn" id="btn-sortch">เรียงตามโอกาส</button><button class="btn" id="btn-norm">ปรับโอกาสรวมเป็น 100%</button>` : ""}
         <span style="flex:1"></span>
-        ${rnd ? `<span class="anndp" role="group" aria-label="ทศนิยมของเรทประกาศ"><span class="hint">เรทประกาศปัดเป็น</span>${[0,1,2,3].map(d => `<button data-anndp="${d}" aria-pressed="${annDp(p) === d}">${d === 0 ? "จำนวนเต็ม" : d + " ตำแหน่ง"}</button>`).join("")}</span>` : ""}
-        ${rnd ? `<button class="btn" id="btn-copyann" title="Item ID, ชื่อ, จำนวน, เรทประกาศ · สำหรับวางในข่าวหรือ Sheet">คัดลอกเรทประกาศ</button>` : ""}<button class="btn" id="btn-copy">คัดลอกไปวางใน Sheet</button>
+        <button class="btn" id="btn-copy">คัดลอกไปวางใน Sheet</button>
       </div>`;
   }
   const prev = BSTEPS[BS.step - 2], next = BSTEPS[BS.step];
@@ -1764,8 +1748,6 @@ function renderEditor(){
   paintIssues();
 }
 document.addEventListener("click", e => {
-  const ad = e.target.closest("[data-anndp]");
-  if (ad && !$("#view-build").hidden) { const p = active(); if (p) { p.rateDp = +ad.dataset.anndp; save(); renderEditor(); renderRight(); } return; }
   if (e.target.closest("#b-ham")) { BS.rail = !BS.rail; lsSet("tosm-pack-builder:rail", BS.rail ? "1" : "0"); renderRail(); paintIssues(); $("#b-ham")?.focus(); return; }
   const b = e.target.closest("[data-bstep]"); if (b && !$("#view-build").hidden) { BS.step = +b.dataset.bstep; renderEditor(); $("#editor").scrollIntoView?.({ block:"nearest" }); $("#b-st-h")?.focus?.(); return; }
   if (e.target.closest("#btn-checkall2")) checkAll();
@@ -1775,8 +1757,6 @@ function updateComputed(){
   document.querySelectorAll("#tbody [data-c]").forEach(el => { const c = r.rows[+el.dataset.r]; if (c) el.textContent = fmt(c[el.dataset.c], el.dataset.c === "ev" ? 3 : 2); });
   document.querySelectorAll("#tbody [data-bar]").forEach(el => { const ch = n(p.items[+el.dataset.bar]?.chance); el.style.width = (ch > 0 && r.maxChance > 0 ? Math.max(2, ch / r.maxChance * 100) : 0) + "%"; });
   document.querySelectorAll("#tbody [data-odds]").forEach(el => { el.textContent = odds(n(p.items[+el.dataset.odds]?.chance)); });
-  document.querySelectorAll("#tbody [data-ann]").forEach(el => { el.textContent = annTxt(n(p.items[+el.dataset.ann]?.chance), annDp(p)); });
-  { const ta = $("#t-ann"); if (ta) ta.textContent = fmt(annSum(p), 6) + "%"; }
   document.querySelectorAll('#tbody [data-k="tp"]').forEach(el => el.classList.toggle("miss", el.value === ""));
   const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
   set("#t-thb", fmt(r.thb)); set("#t-game", fmt(r.game)); set("#t-ev", fmt(r.ev,3)); set("#sec-fixed", fmt(r.fixedTHB));
@@ -2506,7 +2486,7 @@ function modalHTML(p){
   const fixed = p.items.filter(x => !rnd || x.fixed);
   const pool = rnd ? p.items.filter(x => !x.fixed && n(x.chance) > 0).sort((a,b) => n(a.chance) - n(b.chance)) : [];
   const ri_ = x => { const m = BYID.get(x.itemId);
-    return `<div class="sh-ri">${icon(m?.img, m?.grade, x.name)}<span class="nm">${esc(x.name || "(ไม่มีชื่อ)")}</span><span class="ch">โอกาสได้รับ ${annTxt(n(x.chance), annDp(p))}</span><span class="q">x${fmt(n(x.amt),0)}</span><span class="z">${ZOOM}</span></div>`; };
+    return `<div class="sh-ri">${icon(m?.img, m?.grade, x.name)}<span class="nm">${esc(x.name || "(ไม่มีชื่อ)")}</span><span class="ch">โอกาสได้รับ ${fmt(n(x.chance),4)}%</span><span class="q">x${fmt(n(x.amt),0)}</span><span class="z">${ZOOM}</span></div>`; };
   const conds = [
     n(p.limit) > 0 ? ["จำกัดการซื้อต่อ ID", `${fmt(n(p.limit),0)} ครั้ง${ri.on ? " / รอบ" : ""}`] : ["ซื้อได้ไม่จำกัด", ""],
     ...(ri.on ? [["รีเซ็ตสิทธิ์การซื้อ", `ทุก ${ri.every} วัน เวลา ${String(p.reset.firstTime || "00:00").replace(":", ".")} น.`]] : []),
@@ -2638,7 +2618,6 @@ document.addEventListener("click", e => {
     case "btn-norm": { const pool = p.items.filter(x => !x.fixed), s = pool.reduce((a,x) => a + n(x.chance), 0);
       if (s > 0) { pool.forEach(x => x.chance = +(n(x.chance) * 100 / s).toFixed(4)); rerenderAll(); toast("ปรับโอกาสรวมเป็น 100% แล้ว"); } break; }
     case "btn-copy": copyTSV(p); break;
-    case "btn-copyann": copyAnn(p); break;
     case "tab-build": case "btn-back": showView("build"); break;
     case "tab-present": showView("present"); break;
     case "tab-board": showView("board"); break;
@@ -2713,18 +2692,12 @@ document.addEventListener("drop", e => {
   rerenderAll();
 });
 
-/* copy the announced rates (news post / Sheet); fixed items are listed as guaranteed */
-async function copyAnn(p){
-  const dp = annDp(p), rows = p.items.slice().sort((a, b) => (b.fixed - a.fixed) || (n(a.chance) - n(b.chance)));
-  const text = [["Item ID","Item Name","Amt","Chance"].join("\t")].concat(rows.map(x => [x.itemId, x.name, n(x.amt), x.fixed ? "ได้แน่นอน" : annTxt(n(x.chance), dp)].join("\t"))).join("\n");
-  try { await navigator.clipboard.writeText(text); toast("คัดลอกเรทประกาศแล้ว"); } catch { toast("คัดลอกไม่ได้"); }
-}
 /* copy rows for Google Sheet */
 async function copyTSV(p){
   const r = calc(p), rnd = p.mode==="random";
-  const hdr = rnd ? ["Item ID","Item Name","Amt","Chance","Chance ประกาศ","Tradable","TP / ea","Sum TP","THB","EV"] : ["Item ID","Item Name","Amt","Tradable","TP / ea game","TP Web shop","Realistic Price","THB"];
+  const hdr = rnd ? ["Item ID","Item Name","Amt","Chance","Tradable","TP / ea","Sum TP","THB","EV"] : ["Item ID","Item Name","Amt","Tradable","TP / ea game","TP Web shop","Realistic Price","THB"];
   const lines = [hdr.join("\t")].concat(p.items.map((x,i) => { const c = r.rows[i], m = BYID.get(x.itemId), tr = m?.trade==="TRUE" ? "O" : "X";
-    return (rnd ? [x.itemId, x.name, n(x.amt), x.fixed ? "Fixed" : n(x.chance), x.fixed ? "Fixed" : annTxt(n(x.chance), annDp(p)), tr, n(x.tp), c.sumTP, c.thb, x.fixed ? "-" : +c.ev.toFixed(4)]
+    return (rnd ? [x.itemId, x.name, n(x.amt), x.fixed ? "Fixed" : n(x.chance), tr, n(x.tp), c.sumTP, c.thb, x.fixed ? "-" : +c.ev.toFixed(4)]
                 : [x.itemId, x.name, n(x.amt), tr, c.game, n(x.tp), c.sumTP, c.thb]).join("\t"); }));
   const text = lines.join("\n");
   try { await navigator.clipboard.writeText(text); toast("คัดลอกแล้ว วางใน Google Sheet ได้เลย"); }
