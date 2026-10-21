@@ -984,6 +984,19 @@ td .cell.v-err{background:var(--bad-soft)}
   .sv-items .all{grid-row:1/3}
 }
 @media (prefers-reduced-motion:reduce){.sv-seg{transition:none}}
+
+/* hidden packs */
+.hid-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#fff;background:#6b7280;border-radius:999px;padding:1px 8px 1px 6px;margin-right:6px;white-space:nowrap}
+.pk.hid{background:repeating-linear-gradient(135deg,var(--panel),var(--panel) 6px,var(--panel-2) 6px,var(--panel-2) 12px);border-style:dashed;border-color:#9ca3af}
+.pk.hid .n,.pk.hid .p,.pk.hid .m{opacity:.6}
+.pk.hid .hid-tag{grid-column:1/-1;justify-self:start;margin:0 0 2px}
+.hidbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:8px;border:1px dashed #6b7280;background:repeating-linear-gradient(135deg,var(--panel-2),var(--panel-2) 8px,var(--panel) 8px,var(--panel) 16px);color:var(--ink);font-size:13px}
+.hidbar b{margin-right:6px}
+.hidbar > span{flex:1 1 260px}
+.hidbar > svg{flex:none}
+.hidbar .btn{margin-left:auto}
+.hidnote{display:inline-flex;align-items:center;gap:6px;border:1px dashed #9ca3af;background:var(--panel);color:var(--muted);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
+.hm-hid{color:var(--muted);font-weight:400}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -1253,6 +1266,9 @@ const save = (dirty = true) => {
   lsSet(LS_STATE, JSON.stringify({ ...S, packs:undefined }));
   CLOUD?.schedule();
 };
+/* hidden packs stay in จัดแพ็ก (marked) but are left out of สรุปแพ็ก, นำเสนอ, สรุปไอเทม and the default Export selection */
+const shown = packs => packs.filter(p => !p.hidden);
+const EYE_OFF = `<svg class="eyeoff" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a12.6 12.6 0 0 1-3 4.3M6.1 6.2C3.9 7.6 2.5 9.8 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/></svg>`;
 const active = () => S.packs.find(p => p.id === S.activeId) || S.packs[0];
 
 /* ---------- item library ---------- */
@@ -1819,10 +1835,11 @@ function renderEditor(){
   const prev = BSTEPS[BS.step - 2], next = BSTEPS[BS.step];
   $("#editor").innerHTML = `<section class="b-panel ${BS.step === 1 ? "itm" : "set"}" aria-labelledby="b-st-h">
     <header class="b-head"><p class="b-count">ขั้นที่ ${st.n} จาก 2</p><h2 id="b-st-h">${st.t}</h2></header>
+    ${p.hidden ? `<div class="hidbar" role="status">${EYE_OFF}<span><b>แพ็กนี้ซ่อนอยู่</b> ไม่แสดงในสรุปแพ็ก นำเสนอ สรุปไอเทม และไม่ถูกเลือกตอน Export</span><button class="btn" id="btn-hide">เลิกซ่อน</button></div>` : ""}
     ${body}
     <footer class="b-nav">
       ${prev ? `<button class="btn" data-bstep="${prev.n}">ก่อนหน้า: ${prev.t}</button>` : `<span></span>`}
-      <span class="b-pack-acts"><button class="linkbtn" id="btn-dup">ทำสำเนาแพ็ก</button><button class="linkbtn danger" id="btn-delpack">ลบแพ็ก</button></span>
+      <span class="b-pack-acts"><button class="linkbtn" id="btn-hide">${p.hidden ? "เลิกซ่อนแพ็ก" : "ซ่อนแพ็ก"}</button><button class="linkbtn" id="btn-dup">ทำสำเนาแพ็ก</button><button class="linkbtn danger" id="btn-delpack">ลบแพ็ก</button></span>
       ${next ? `<button class="btn pri" data-bstep="${next.n}">ถัดไป: ${next.t}</button>` : `<button class="btn pri" id="btn-checkall2">ตรวจทั้งแพ็ก</button>`}
     </footer></section>`;
   $("#b-main").classList.toggle("with-lib", BS.step === 1);
@@ -1832,6 +1849,7 @@ function renderEditor(){
   paintIssues();
 }
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-bhidden]")) { showView("build"); return; }
   if (e.target.closest("#b-ham")) { BS.rail = !BS.rail; lsSet("tosm-pack-builder:rail", BS.rail ? "1" : "0"); renderRail(); paintIssues(); $("#b-ham")?.focus(); return; }
   const b = e.target.closest("[data-bstep]"); if (b && !$("#view-build").hidden) { BS.step = +b.dataset.bstep; renderEditor(); $("#editor").scrollIntoView?.({ block:"nearest" }); $("#b-st-h")?.focus?.(); return; }
   if (e.target.closest("#btn-checkall2")) checkAll();
@@ -1856,8 +1874,8 @@ function updateComputed(){
 function renderRight(){
   if (!active()) return;
   $("#packs").innerHTML = S.packs.map(p => { const r = calc(p);
-    return `<button class="pk" data-pack="${p.id}" aria-current="${p.id===S.activeId}" title="${esc(p.name)}">
-      <span class="n">${esc(p.name)}</span><span class="p num">฿${fmt(n(p.price))}</span>
+    return `<button class="pk${p.hidden ? " hid" : ""}" data-pack="${p.id}" aria-current="${p.id===S.activeId}" title="${esc(p.name)}${p.hidden ? " (ซ่อนอยู่)" : ""}">
+      ${p.hidden ? `<span class="hid-tag">${EYE_OFF}ซ่อนอยู่</span>` : ""}<span class="n">${esc(p.name)}</span><span class="p num">฿${fmt(n(p.price))}</span>
       <span class="m">${p.mode==="random"?"Random":"Fixed"} · <span class="${discClass(r.disc)}">${!isFinite(r.disc) ? "–" : r.disc < 0 ? "แพงกว่า " + fmt(-r.disc*100,1) + "%" : "ลด " + fmt(r.disc*100,1) + "%"}</span></span></button>`; }).join("")
     + `<button class="pk add" id="btn-newpack">+ แพ็กใหม่</button>`;
   const p = active(), r = calc(p), iss = validatePack(p), rnd = p.mode==="random", dc = discClass(r.disc);
@@ -2146,7 +2164,7 @@ const dayStart = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
 function packRange(p){ const a = toDT(p.start, p.startTime), b = toDT(p.end, p.endTime); return a || b ? [a || b, b || a] : null; }
 function folderRange(f){
   let lo = null, hi = null;
-  f.packs.forEach(p => { const r = packRange(p); if (!r) return; if (!lo || r[0] < lo) lo = r[0]; if (!hi || r[1] > hi) hi = r[1]; });
+  shown(f.packs).forEach(p => { const r = packRange(p); if (!r) return; if (!lo || r[0] < lo) lo = r[0]; if (!hi || r[1] > hi) hi = r[1]; });
   return lo ? [lo, hi] : null;
 }
 function periodWindow(){
@@ -2185,8 +2203,9 @@ function renderHome(){
   const chip = (k, t) => `<button class="hm-chip" data-hperiod="${k}" aria-pressed="${HV.period === k}">${t}</button>`;
 
   const card = f => {
-    const st = folderStatus(f), r = folderRange(f), col = folderColor(f), rnd = f.packs.filter(p => p.mode === "random").length;
-    const discs = f.packs.map(p => calc(p).disc).filter(isFinite), avg = discs.length ? discs.reduce((a,b) => a + b, 0) / discs.length : NaN;
+    const vis = shown(f.packs), nHid = f.packs.length - vis.length;
+    const st = folderStatus(f), r = folderRange(f), col = folderColor(f), rnd = vis.filter(p => p.mode === "random").length;
+    const discs = vis.map(p => calc(p).disc).filter(isFinite), avg = discs.length ? discs.reduce((a,b) => a + b, 0) / discs.length : NaN;
     const cats = catsInUse(f.packs).map(catLabel);
     const thumbs = f.packs.slice(0, 4).map(p => `<span class="hm-th">${packPic(p, calc(p))}</span>`).join("");
     const isOpen = S.folderId === f.id;
@@ -2205,7 +2224,7 @@ function renderHome(){
       </div>
       <div class="hm-meta"><span class="hm-st ${st.k}">${st.t}</span><span>${rangeText(r)}</span></div>
       <div class="hm-thumbs">${thumbs || `<span class="hm-empty">ยังไม่มีแพ็ก</span>`}${f.packs.length > 4 ? `<span class="hm-more">+${f.packs.length - 4}</span>` : ""}</div>
-      <div class="hm-stats"><span><b>${f.packs.length}</b> แพ็ก</span><span><b>${rnd}</b> สุ่ม</span><span>ลดเฉลี่ย <b>${isFinite(avg) ? fmt(avg*100,0) + "%" : "–"}</b></span></div>
+      <div class="hm-stats"><span><b>${vis.length}</b> แพ็ก${nHid ? ` <small class="hm-hid">+ ซ่อน ${nHid}</small>` : ""}</span><span><b>${rnd}</b> สุ่ม</span><span>ลดเฉลี่ย <b>${isFinite(avg) ? fmt(avg*100,0) + "%" : "–"}</b></span></div>
       ${cats.length ? `<div class="hm-cats">${cats.slice(0,4).map(c => `<span>${esc(c)}</span>`).join("")}${cats.length > 4 ? `<span>+${cats.length - 4}</span>` : ""}</div>` : ""}
       <div class="hm-acts"><button class="btn pri" data-hgo="build|${f.id}">จัดแพ็ก</button><button class="btn" data-hgo="board|${f.id}">สรุปแพ็ก</button><button class="btn" data-hgo="present|${f.id}">นำเสนอ</button></div>
       <div class="hm-upd">แก้ไขล่าสุด ${new Date(f.updated).toLocaleString("th-TH", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}${isOpen ? " · เปิดอยู่" : ""}</div>
@@ -2369,22 +2388,25 @@ function boardCol(p){
 }
 function renderBoard(){
   const el = $("#bd-main"); if (!el || $("#view-board").hidden) return;
+  const marks = scrollMarks();
   const focusId = document.activeElement?.id === "bsearch" ? "bsearch" : null;
-  const cats = catsInUse(S.packs);
+  const cats = catsInUse(shown(S.packs)), nHid = S.packs.length - shown(S.packs).length;
   const cc = changeCount();
   el.innerHTML = `<div class="bd">
     <div class="bd-bar"><h1>สรุปแพ็ก · ${esc(S.project)}</h1>
       <span class="bd-legend"><i></i> แก้ไขตั้งแต่เปิดหน้านี้ ${cc ? `(${cc} จุด)` : ""}</span>
       <button class="btn" id="bd-undo" ${BV.history.length ? "" : "disabled"}>↶ ย้อนกลับ${BV.history.length ? ` (${BV.history.length})` : ""}</button>
+      ${nHid ? `<button class="hidnote" data-bhidden>${EYE_OFF}ซ่อนอยู่ ${nHid} แพ็ก · เลิกซ่อนได้ที่หน้าจัดแพ็ก</button>` : ""}
       <span class="note">ลากไอเทมไปแพ็กอื่น = ย้าย · กด Ctrl ค้างขณะลาก = คัดลอก</span></div>
     <div class="bd-scroll"><div class="bd-row">
       ${cats.map(c => `<section class="bd-grp" data-bgrp="${esc(c)}"><h2>${esc(catLabel(c))}</h2><div class="bd-cols">
-        ${S.packs.filter(p => catOf(p) === c).map(boardCol).join("")}
+        ${shown(S.packs).filter(p => catOf(p) === c).map(boardCol).join("")}
         <div class="bcol addcol" role="button" tabindex="0" data-bnew="${esc(c)}">+ แพ็กใหม่<br><small>ในหมวด ${esc(catLabel(c))}</small></div>
       </div></section>`).join("")}
       ${cats.length ? "" : `<div class="bcol addcol" role="button" tabindex="0" data-bnew="${esc(S.azMap["แพ็ก & จุ่ม"] || "")}">+ แพ็กใหม่</div>`}
     </div></div></div>`;
-  if (focusId) { const i = $("#" + focusId); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  restoreScroll(marks);
+  if (focusId) { const i = $("#" + focusId); i.focus({ preventScroll:true }); i.setSelectionRange(i.value.length, i.value.length); }
 }
 /* board item library: drag an item onto any pack column */
 const LS_BLIB = "tosm-pack-builder:boardlib";
@@ -2542,15 +2564,16 @@ function shopCard(p, team){ const r = calc(p), rl = resetLabel(p), dc = discClas
       ${team ? `<span class="sh-team ${dc === "disc-good" ? "good" : dc === "disc-low" ? "low" : ""}"><span>${!isFinite(r.disc) ? "ยังไม่มีมูลค่า" : r.disc < 0 ? `แพงกว่ามูลค่า ${fmt(-r.disc*100,1)}%` : `ลด ${fmt(r.disc*100,1)}%`}</span><span>${p.mode === "random" ? "EV" : "มูลค่า"} ฿${fmt(Math.round(r.value))}</span></span>` : ""}
     </div>`; }
 function renderPresent(){
-  const cats = catsInUse(S.packs);
+  const vis = shown(S.packs), nHid = S.packs.length - vis.length;
+  const cats = catsInUse(vis);
   if (PV.cat === "__summary" && !PV.team) PV.cat = "All";
   if (PV.cat !== "All" && PV.cat !== "__summary" && !cats.includes(PV.cat)) PV.cat = "All";
-  const list = S.packs.map((p, i) => ({ p, i })).filter(o => PV.cat === "All" || catOf(o.p) === PV.cat)
+  const list = vis.map((p, i) => ({ p, i })).filter(o => PV.cat === "All" || catOf(o.p) === PV.cat)
     .sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(o => o.p);
   const card = p => shopCard(p, PV.team);
   $("#view-present").innerHTML = `<div class="shop">
     <div class="sh-top">
-      <h1>${esc(S.project)}<span class="sub">${S.packs.length} แพ็ก · ตัวอย่างหน้าร้าน (ยังไม่เปิดขายจริง)</span></h1>
+      <h1>${esc(S.project)}<span class="sub">${vis.length} แพ็ก${nHid ? ` (ซ่อนไว้ ${nHid})` : ""} · ตัวอย่างหน้าร้าน (ยังไม่เปิดขายจริง)</span></h1>
       <div class="sh-view" role="group" aria-label="มุมมอง"><button data-pview="player" aria-pressed="${!PV.team}">มุมมองผู้เล่น</button><button data-pview="team" aria-pressed="${PV.team}">มุมมองทีม</button></div>
       <button class="sh-back" id="btn-back">กลับไปจัดแพ็ก</button>
     </div>
@@ -2568,7 +2591,7 @@ function renderPresent(){
 
 /* team summary: every pack in display order — items, price, limit, how much one ID gets and pays if it buys the full limit */
 function summaryRows(){
-  return S.packs.map((p, i) => ({ p, i })).sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(({ p }) => {
+  return shown(S.packs).map((p, i) => ({ p, i })).sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(({ p }) => {
     const rnd = p.mode === "random", ri = resetInfo(p), lim = n(p.limit);
     const rounds = ri.on ? ri.periods : 1;                     // null when Reset is on but there is no end date
     const buys = lim > 0 && rounds ? lim * rounds : null;
@@ -2793,6 +2816,7 @@ document.addEventListener("click", e => {
     case "btn-dup": { const c = JSON.parse(JSON.stringify(p)); c.id = uid(); c.name += " (สำเนา)"; c.items.forEach(x => x.uid = uid());
       S.packs.splice(S.packs.indexOf(p)+1, 0, c); S.activeId = c.id; rerenderAll(); break; }
     case "btn-delpack": confirmDelete(t, p); break;
+    case "btn-hide": p.hidden = !p.hidden; if (!p.hidden) delete p.hidden; rerenderAll(); toast(p.hidden ? `ซ่อน “${p.name}” แล้ว · ไม่นับในสรุปแพ็ก นำเสนอ และสรุปไอเทม` : `เลิกซ่อน “${p.name}” แล้ว`); break;
     case "btn-paste": openPaste(); break;
     case "btn-checkall": checkAll(); break;
     case "btn-custom": p.items.push({ uid:uid(), custom:true, itemId:"", name:"", amt:1, tp:"", tpGame:"", chance:"", fixed:false });
@@ -3079,7 +3103,7 @@ function xlCheck(p){
 const XV = { fid:null, sel:new Set(), preview:false, mode:"both" };
 function openExport(fid, mode){
   XV.fid = fid; if (mode) XV.mode = mode; const f = S.folders.find(x => x.id === fid); if (!f) return;
-  XV.sel = new Set(f.packs.filter(p => !xlCheck(p).errors.length).map(p => p.id)); XV.preview = false;
+  XV.sel = new Set(f.packs.filter(p => !p.hidden && !xlCheck(p).errors.length).map(p => p.id)); XV.preview = false;
   renderExport();
 }
 function renderExport(){
@@ -3099,11 +3123,11 @@ function renderExport(){
       <div class="fld"><label for="xl-f">โฟลเดอร์</label><select id="xl-f">${S.folders.map(x => `<option value="${x.id}"${x.id === f.id ? " selected" : ""}>${esc(x.name)} (${x.packs.length} แพ็ก)</option>`).join("")}</select></div>
       <div class="fld"><label>ไฟล์ที่ต้องการ</label><div class="seg" role="group">${Object.entries(XL_MODES).map(([k,v]) => `<button data-xlmode="${k}" aria-pressed="${XV.mode === k}">${v}</button>`).join("")}</div></div>
     </div>
-    <div class="xl-bar"><button class="linkbtn" id="xl-all">เลือกทุกแพ็กที่พร้อม</button><button class="linkbtn" id="xl-none">ไม่เลือกเลย</button></div>
+    <div class="xl-bar"><button class="linkbtn" id="xl-all">เลือกทุกแพ็กที่พร้อม (ยกเว้นที่ซ่อน)</button><button class="linkbtn" id="xl-none">ไม่เลือกเลย</button></div>
     <div class="xl-list">${res.map(r => { const bad = r.errors.length, on = XV.sel.has(r.p.id) && !bad;
       const info = [wantB ? `${r.b.bundles.length} Bundle` : "", wantP ? "1 Product" : "", wantP ? esc(azCatOf(r.p) || "ไม่มีหมวด Aztek") : ""].filter(Boolean).join(" · ");
       return `<label class="xl-p${bad ? " bad" : ""}"><input type="checkbox" data-xlp="${r.p.id}" ${on ? "checked" : ""} ${bad ? "disabled" : ""}>
-        <span class="xl-n"><b>${esc(r.p.name || "(ไม่มีชื่อ)")}</b><small>${r.p.mode === "random" ? "Random" : "Fixed"} · ${info}</small>
+        <span class="xl-n"><b>${esc(r.p.name || "(ไม่มีชื่อ)")}</b>${r.p.hidden ? `<span class="hid-tag">${EYE_OFF}ซ่อนอยู่</span>` : ""}<small>${r.p.mode === "random" ? "Random" : "Fixed"} · ${info}</small>
           ${r.errors.map(x => `<span class="xl-e">✕ ${esc(x)}</span>`).join("")}${r.warns.map(x => `<span class="xl-w">! ${esc(x)}</span>`).join("")}</span></label>`; }).join("") || `<p>โฟลเดอร์นี้ยังไม่มีแพ็ก</p>`}</div>
     ${dup.length ? `<div class="xl-w">! ชื่อ Bundle ซ้ำกัน: ${dup.map(esc).join(", ")} — Aztek อาจรวมเป็นอันเดียว</div>` : ""}
     <div class="xl-sum">จาก ${chosen.length} แพ็ก จะได้ ${[wantB ? `<b>${nb}</b> Bundle (${bRows.length} แถว)` : "", wantP ? `<b>${pRows.length}</b> Product` : ""].filter(Boolean).join(" และ ")}</div>
@@ -3155,7 +3179,7 @@ document.addEventListener("click", e => {
   if (e.target.id === "xl-go") return doExport();
   const f = S.folders.find(x => x.id === XV.fid);
   const mb = e.target.closest("[data-xlmode]"); if (mb) { XV.mode = mb.dataset.xlmode; openExport(XV.fid); return; }
-  if (e.target.id === "xl-all") { XV.sel = new Set(f.packs.filter(p => !xlCheck(p).errors.length).map(p => p.id)); renderExport(); }
+  if (e.target.id === "xl-all") { XV.sel = new Set(f.packs.filter(p => !p.hidden && !xlCheck(p).errors.length).map(p => p.id)); renderExport(); }
   if (e.target.id === "xl-none") { XV.sel.clear(); renderExport(); }
 });
 document.addEventListener("change", e => {
@@ -3193,7 +3217,7 @@ function packMult(p, metric){
   const ri = resetInfo(p); return lim * (ri.on ? (ri.periods || 1) : 1);
 }
 function itemsRange(){
-  const all = S.folders.flatMap(f => f.packs).map(packSpan).filter(Boolean);
+  const all = S.folders.flatMap(f => shown(f.packs)).map(packSpan).filter(Boolean);
   const now = new Date(); now.setHours(0,0,0,0);
   if (IV.range === "month") return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 0)];
   if (IV.range === "3m") return [new Date(now.getFullYear(), now.getMonth() - 2, 1), new Date(now.getFullYear(), now.getMonth() + 1, 0)];
@@ -3220,7 +3244,7 @@ function itemsData(){
   const range = itemsRange(), metric = IV.metric;
   const folders = S.folders.filter(f => !IV.folder || f.id === IV.folder);
   const entries = [];                                  // every (folder, pack) that counts
-  folders.forEach(f => f.packs.forEach(p => { const sp = packSpan(p);
+  folders.forEach(f => shown(f.packs).forEach(p => { const sp = packSpan(p);
     if (range && IV.range !== "all" && (!sp || !overlapDays(sp, range))) return;
     if (IV.cat && catOf(p) !== IV.cat) return;
     if (IV.btype && p.mode !== IV.btype) return;
@@ -3276,7 +3300,7 @@ function renderItems(){
         <select id="iv-folder" aria-label="โปรโมชัน"><option value="">ทุกโปรโมชัน</option>${S.folders.map(f => `<option value="${f.id}"${IV.folder === f.id ? " selected" : ""}>${esc(f.name)}</option>`).join("")}</select>
         <select id="iv-type" aria-label="ประเภท"><option value="">ทุกประเภท</option>${types.map(t => `<option${IV.type === t ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>
         <select id="iv-grade" aria-label="เกรด"><option value="">ทุกเกรด</option>${grades.map(t => `<option${IV.grade === t ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>
-        <select id="iv-cat" aria-label="หมวดหมู่"><option value="">ทุกหมวดหมู่</option>${catsInUse(S.folders.flatMap(f => f.packs)).map(c => `<option value="${esc(c)}"${IV.cat === c ? " selected" : ""}>${esc(catLabel(c))}</option>`).join("")}</select>
+        <select id="iv-cat" aria-label="หมวดหมู่"><option value="">ทุกหมวดหมู่</option>${catsInUse(S.folders.flatMap(f => shown(f.packs))).map(c => `<option value="${esc(c)}"${IV.cat === c ? " selected" : ""}>${esc(catLabel(c))}</option>`).join("")}</select>
         <select id="iv-btype" aria-label="ประเภท Bundle"><option value="">Fixed และ Random</option><option value="fixed"${IV.btype === "fixed" ? " selected" : ""}>เฉพาะ Fixed</option><option value="random"${IV.btype === "random" ? " selected" : ""}>เฉพาะ Random</option></select>
         <select id="iv-sort" aria-label="เรียง"><option value="total"${IV.sort === "total" ? " selected" : ""}>จำนวนมากสุดก่อน</option><option value="name"${IV.sort === "name" ? " selected" : ""}>ชื่อ ก–ฮ / A–Z</option></select></div>
     </div>
@@ -3422,12 +3446,31 @@ function focusKey(){
   const a = document.activeElement; if (!a || a === document.body || a.closest(".modal")) return null;
   const attr = ["id","data-i","data-k","data-f","data-rf","data-bf","data-bi","data-bsearch"].filter(x => a.hasAttribute(x)).map(x => `[${x}="${CSS.escape(a.getAttribute(x))}"]`).join("");
   if (!attr) return null;
-  let sel = null; try { sel = [a.selectionStart, a.selectionEnd]; } catch {}
-  return { q: a.tagName.toLowerCase() + attr, sel, scroll: [...document.querySelectorAll(".scroll,.bd-scroll")].map(e => [e, e.scrollTop, e.scrollLeft]) };
+  let sel = null; try { sel = a.selectionStart == null ? null : [a.selectionStart, a.selectionEnd]; } catch {}
+  return { q: a.tagName.toLowerCase() + attr, sel, val: a.value, scroll: scrollMarks() };
+}
+/* scroll boxes are matched by id, or by class + position, so a box that was rebuilt gets its scroll back */
+const SCROLLERS = ".scroll,.bd-scroll,.tblwrap,.sm-scroll";
+function scrollMarks(){
+  const seen = {};
+  return [...document.querySelectorAll(SCROLLERS)].map(e => { const key = e.id ? "#" + e.id : e.className; seen[key] = (seen[key] || 0) + 1;
+    return { key, i: seen[key] - 1, t: e.scrollTop, l: e.scrollLeft }; });
+}
+function restoreScroll(marks){
+  const seen = {}, now = [...document.querySelectorAll(SCROLLERS)].map(e => { const key = e.id ? "#" + e.id : e.className; seen[key] = (seen[key] || 0) + 1; return { e, key, i: seen[key] - 1 }; });
+  (marks || []).forEach(m => { const hit = now.find(x => x.key === m.key && x.i === m.i); if (hit) { hit.e.scrollTop = m.t; hit.e.scrollLeft = m.l; } });
 }
 function restoreFocus(k){
-  if (!k) return; const el = document.querySelector(k.q); if (el) { el.focus({ preventScroll:true }); try { if (k.sel && k.sel[0] != null) el.setSelectionRange(...k.sel); } catch {} }
-  k.scroll.forEach(([e, t, l]) => { const same = e.id ? document.getElementById(e.id) : null; if (same) { same.scrollTop = t; same.scrollLeft = l; } });
+  if (!k) return;
+  restoreScroll(k.scroll);
+  const el = document.querySelector(k.q); if (!el) return;
+  el.focus({ preventScroll:true });
+  try {
+    if (k.sel) el.setSelectionRange(...k.sel);
+    else if (el.type === "number" && el.value === k.val) {      // number fields keep no caret position: put it back at the end, where typing happens
+      const end = el.value.length; el.type = "text"; el.setSelectionRange(end, end); el.type = "number";
+    }
+  } catch {}
 }
 function refresh(){
   const fk = focusKey();
@@ -3545,7 +3588,9 @@ function makeSupa(cfg){
   /* ---- pack ⇄ row ---- */
   const PACK_KEYS = new Set(["id","name","mode","price","pos","limit","start","startTime","end","endTime","reset","azCat","types","bonus","idea","image","sold","items"]);
   const ITEM_KEYS = new Set(["uid","itemId","name","amt","tp","tpGame","chance","fixed","custom"]);
-  const extraOf = (o, keys) => { const e = {}; Object.keys(o).forEach(k => { if (!keys.has(k) && !k.startsWith("_") && o[k] !== undefined) e[k] = o[k]; }); return e; };
+  /* jsonb gives keys back in its own order; sort them so the same data always compares equal */
+  const sortObj = o => Array.isArray(o) ? o.map(sortObj) : o && typeof o === "object" ? Object.keys(o).sort().reduce((a, k) => (a[k] = sortObj(o[k]), a), {}) : o;
+  const extraOf = (o, keys) => { const e = {}; Object.keys(o).sort().forEach(k => { if (!keys.has(k) && !k.startsWith("_") && o[k] !== undefined) e[k] = sortObj(o[k]); }); return e; };
   function packToDB(p, fid){
     const rs = p.reset || {};
     return { p:{ id:p.id, folder_id:fid, name:String(p.name ?? ""), mode:p.mode === "random" ? "random" : "fixed", price:num(p.price), display_pos:int(p.pos) ?? 0,
@@ -3557,11 +3602,11 @@ function makeSupa(cfg){
         chance:pos0(num(x.chance)), is_fixed:!!x.fixed, is_custom:!!x.custom, extra:extraOf(x, ITEM_KEYS) })) };
   }
   function dbToPack(r, items){
-    const p = { ...(r.extra || {}), id:r.id, name:r.name, mode:r.mode, price:blank(r.price), pos:r.display_pos ?? 0, limit:blank(r.buy_limit),
+    const p = { ...sortObj(r.extra || {}), id:r.id, name:r.name, mode:r.mode, price:blank(r.price), pos:r.display_pos ?? 0, limit:blank(r.buy_limit),
       start:r.start_date || "", startTime:r.start_time, end:r.end_date || "", endTime:r.end_time,
       reset:{ on:!!r.reset_on, every:blank(r.reset_every), firstDate:r.reset_first_date || "", firstTime:r.reset_first_time },
       azCat:r.az_category || "", types:r.types || [], bonus:r.bonus !== false, idea:r.idea || "", image:r.image_url || "",
-      items:(items || []).slice().sort((a, b) => a.position - b.position).map(x => ({ ...(x.extra || {}), uid:x.uid, itemId:x.item_id, name:x.name,
+      items:(items || []).slice().sort((a, b) => a.position - b.position).map(x => ({ ...sortObj(x.extra || {}), uid:x.uid, itemId:x.item_id, name:x.name,
         amt:blank(x.amt), tp:blank(x.tp), tpGame:blank(x.tp_game), chance:blank(x.chance), fixed:!!x.is_fixed, ...(x.is_custom ? { custom:true } : {}) })) };
     if (r.sold_count != null) p.sold = r.sold_count;
     return p;
@@ -3575,7 +3620,7 @@ function makeSupa(cfg){
       m.set("folder:" + f.id, { kind:"folder", id:f.id, fid:"", json: clean({ name:f.name, color:f.color || "", created:f.created || 0, order:f.packs.map(p => p.id) }) });
       f.packs.forEach(p => m.set("pack:" + p.id, { kind:"pack", id:p.id, fid:f.id, json: clean(canonPack(p)) }));
     });
-    m.set("shared:main", { kind:"shared", id:"main", fid:"", json: clean({ customCats:S.customCats || [], azMap:S.azMap || {}, settings:{ rate:num(S.settings.rate), seed:num(S.settings.seed) } }) });
+    m.set("shared:main", { kind:"shared", id:"main", fid:"", json: clean({ customCats:S.customCats || [], azMap:sortObj(S.azMap || {}), settings:{ rate:num(S.settings.rate), seed:num(S.settings.seed) } }) });
     Object.entries(S.memo || {}).forEach(([id, v]) => { if (id) m.set("memo:" + id, { kind:"memo", id, fid:"", json: clean(canonMemo(v)) }); });
     return m;
   }
@@ -3583,7 +3628,7 @@ function makeSupa(cfg){
   const folderRow = f => ({ kind:"folder", id:f.id, fid:"", by:by(f), updated:Date.parse(f.updated_at) || 0,
     json: clean({ name:f.name, color:f.color || "", created:Date.parse(f.created_at) || 0, order:f.pack_order || [] }) });
   const packRow = (r, items) => ({ kind:"pack", id:r.id, fid:r.folder_id, by:by(r), updated:Date.parse(r.updated_at) || 0, json: clean(dbToPack(r, items)) });
-  const sharedRow = a => ({ kind:"shared", id:"main", fid:"", by:by(a), json: clean({ customCats:a.custom_cats || [], azMap:a.az_map || {}, settings:{ rate:num(a.tp_rate), seed:num(a.seed_per_thb) } }) });
+  const sharedRow = a => ({ kind:"shared", id:"main", fid:"", by:by(a), json: clean({ customCats:a.custom_cats || [], azMap:sortObj(a.az_map || {}), settings:{ rate:num(a.tp_rate), seed:num(a.seed_per_thb) } }) });
   const memoRow = v => ({ kind:"memo", id:v.item_id, fid:"", by:by(v), json: clean(canonMemo({ tp:v.tp, tpGame:v.tp_game })) });
 
   async function fetchAll(table, order){
