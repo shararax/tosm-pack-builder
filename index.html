@@ -1211,6 +1211,10 @@ function migratePack(p){
   if (!String(p.azCat || "").trim() && S.azMap?.[p.category]) p.azCat = S.azMap[p.category];   // pin the Aztek category once
   if (p.bonus === undefined) p.bonus = true;            // gets Golden Seed Point + Player EXP
   if (typeof p.idea !== "string") p.idea = "";
+  /* coin names lost their trailing " 1" (21 Oct 2026) — runs before the currency list exists, so the names are spelled out here */
+  { const old = { "God Coin 1":"God Coin", "Fellow Coin 1":"Fellow Coin", "Kupole Coin 1":"Kupole Coin" }, ids = ["popo_god_1","popo_fellow_1","popo_kupo_1"];
+    if (old[p.currency]) p.currency = old[p.currency];
+    p.items.forEach(x => { if (old[x.name] && (ids.includes(String(x.itemId || "").toLowerCase()) || !x.itemId)) x.name = old[x.name]; }); }
   if (!allCats().includes(p.category)) S.customCats.push(p.category);
 }
 let S = null;
@@ -1276,7 +1280,7 @@ const save = (dirty = true) => {
 const shown = packs => packs.filter(p => !p.hidden);
 /* currency the pack is bought with. Seed Point (default) is priced from THB × Seed per THB;
    any other currency has its own amount (curPrice) and the THB price is only a value reference */
-const PAY_CURS = ["Seed Point", "Golden Seed Point", "God Coin 1", "Fellow Coin 1", "Kupole Coin 1"];
+const PAY_CURS = ["Seed Point", "Golden Seed Point", "God Coin", "Fellow Coin", "Kupole Coin"];
 const payCur = p => String(p?.currency || "").trim() || "Seed Point";
 const isSP = p => !p?._curCustom && payCur(p) === "Seed Point";   // "กรอกเอง" with no name yet already counts as another currency
 const payAmt = p => isSP(p) ? n(p.price) * (n(S.settings.seed) || 10) : n(p.curPrice);
@@ -1320,11 +1324,12 @@ const CURRENCIES = [
   { id:"Gold_Cur",      name:"Gold",          exp:"Gold",    az:{ type:"TOSM_GOLD",    id:101147 } },
   { id:"TP_Cur",        name:"TP",            exp:"TP",      az:{ type:"TOSM_TP",      id:101145 } },
   { id:"Diamond_Cur",   name:"Diamond",       exp:"Diamond", az:{ type:"TOSM_DIAMOND", id:101146 } },
-  { id:"Popo_Kupo_1",   name:"Kupole Coin 1", exp:"Kupole Coin 1" },
-  { id:"Popo_God_1",    name:"God Coin 1",    exp:"God Coin 1" },
-  { id:"Popo_Fellow_1", name:"Fellow Coin 1", exp:"Fellow Coin 1" },
+  /* coins export by name without the trailing " 1" (SK, 21 Oct 2026); the old names still match */
+  { id:"Popo_Kupo_1",   name:"Kupole Coin",   exp:"Kupole Coin", old:"Kupole Coin 1" },
+  { id:"Popo_God_1",    name:"God Coin",      exp:"God Coin",    old:"God Coin 1" },
+  { id:"Popo_Fellow_1", name:"Fellow Coin",   exp:"Fellow Coin", old:"Fellow Coin 1" },
 ];
-const CUR_BY = new Map(); CURRENCIES.forEach(c => { CUR_BY.set(c.id.toLowerCase(), c); CUR_BY.set(c.name.toLowerCase(), c); });
+const CUR_BY = new Map(); CURRENCIES.forEach(c => { CUR_BY.set(c.id.toLowerCase(), c); CUR_BY.set(c.name.toLowerCase(), c); if (c.old) CUR_BY.set(c.old.toLowerCase(), c); });
 const currencyOf = x => CUR_BY.get(String(x.itemId || "").trim().toLowerCase()) || (isCustom(x) || !x.itemId ? CUR_BY.get(String(x.name || "").trim().toLowerCase()) : null) || null;
 function setItems(raw){
   const out = raw.map(r => ({ key:r.id+"#"+r.row, id:String(r.id), name:r.en || r.th, th:r.th || "", img:r.img || "",
@@ -2663,7 +2668,7 @@ function summaryTableHTML(){
       <tfoot><tr><td colspan="4"></td><td class="r money">฿${fmt(tPrice, 2)}</td><td colspan="2" class="r note">${[open ? `ไม่รวม ${open} แพ็กที่ไม่จำกัด` : "", other ? `สกุลเงินอื่น: ${other}` : ""].filter(Boolean).join(" · ")}</td><td class="r money grand">฿${fmt(tPaid, 2)}</td></tr></tfoot>
     </table></div></div>`;
 }
-/* totals of packs bought with currencies other than Seed Point, e.g. "600 God Coin 1 · 40 GSP" */
+/* totals of packs bought with currencies other than Seed Point, e.g. "600 God Coin · 40 GSP" */
 function curTotals(R){
   const m = new Map(); R.forEach(r => { if (!r.sp && r.curPaid != null) m.set(r.cur, (m.get(r.cur) || 0) + r.curPaid); });
   return [...m].map(([c, v]) => `${fmt(v, 0)} ${esc(curShort(c))}`).join(" · ");
