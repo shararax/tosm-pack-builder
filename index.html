@@ -1316,9 +1316,10 @@ const gradeColor = g => `var(--g-${gradeKey(g)})`;
 /* raw rows: {row,id,en,th,img,type,cls,trade,grade,desc,az} — same shape from Apps Script and CSV */
 /* web currencies have no game Item ID — they export by name as WALLET_DEBIT */
 const CURRENCIES = [
-  { id:"Gold_Cur",      name:"Gold",          exp:"Gold" },
-  { id:"TP_Cur",        name:"TP",            exp:"TP" },
-  { id:"Diamond_Cur",   name:"Diamond",       exp:"Diamond" },
+  /* TP, Gold and Diamond export by their Aztek ID and own item type (SK, 21 Oct 2026) */
+  { id:"Gold_Cur",      name:"Gold",          exp:"Gold",    az:{ type:"TOSM_GOLD",    id:101147 } },
+  { id:"TP_Cur",        name:"TP",            exp:"TP",      az:{ type:"TOSM_TP",      id:101145 } },
+  { id:"Diamond_Cur",   name:"Diamond",       exp:"Diamond", az:{ type:"TOSM_DIAMOND", id:101146 } },
   { id:"Popo_Kupo_1",   name:"Kupole Coin 1", exp:"Kupole Coin 1" },
   { id:"Popo_God_1",    name:"God Coin 1",    exp:"God Coin 1" },
   { id:"Popo_Fellow_1", name:"Fellow Coin 1", exp:"Fellow Coin 1" },
@@ -3041,7 +3042,7 @@ const GSP_ID = "Golden Seed Point", EXP_ID = "Player Experience - tosm";
 /* one item row; returns {row} or {error} */
 function xlItemRow(x){
   const cur = currencyOf(x);
-  if (cur) return { type:"WALLET_DEBIT", id:cur.exp, tier:"Trainee" };
+  if (cur) return cur.az ? { type:cur.az.type, id:cur.az.id, tier:"Trainee" } : { type:"WALLET_DEBIT", id:cur.exp, tier:"Trainee" };
   const id = String(x.itemId || "").trim();
   if (!id) return { error:`“${x.name || "ไอเทมไม่มีชื่อ"}” ไม่มี Item ID` };
   const m = BYID.get(id);
