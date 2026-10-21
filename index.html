@@ -997,6 +997,12 @@ td .cell.v-err{background:var(--bad-soft)}
 .hidbar .btn{margin-left:auto}
 .hidnote{display:inline-flex;align-items:center;gap:6px;border:1px dashed #9ca3af;background:var(--panel);color:var(--muted);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
 .hm-hid{color:var(--muted);font-weight:400}
+
+/* pack currency */
+.cui{display:inline-block;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3c4,#e2a93a 60%,#a86f12);margin-right:4px;vertical-align:-1px}
+.sv-other{margin:-8px 0 16px;font-size:14px;color:#ffe9a8}
+.sv-math .res .cur{font-size:20px}
+#p-curc{margin-top:4px}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -1268,6 +1274,15 @@ const save = (dirty = true) => {
 };
 /* hidden packs stay in จัดแพ็ก (marked) but are left out of สรุปแพ็ก, นำเสนอ, สรุปไอเทม and the default Export selection */
 const shown = packs => packs.filter(p => !p.hidden);
+/* currency the pack is bought with. Seed Point (default) is priced from THB × Seed per THB;
+   any other currency has its own amount (curPrice) and the THB price is only a value reference */
+const PAY_CURS = ["Seed Point", "Golden Seed Point", "God Coin 1", "Fellow Coin 1", "Kupole Coin 1"];
+const payCur = p => String(p?.currency || "").trim() || "Seed Point";
+const isSP = p => !p?._curCustom && payCur(p) === "Seed Point";   // "กรอกเอง" with no name yet already counts as another currency
+const payAmt = p => isSP(p) ? n(p.price) * (n(S.settings.seed) || 10) : n(p.curPrice);
+const curShort = c => c === "Seed Point" ? "SP" : c === "Golden Seed Point" ? "GSP" : c;
+const curLabel = p => isSP(p) ? "SP" : String(p.currency || "").trim() ? curShort(payCur(p)) : "สกุลเงิน";
+const payText = p => `${fmt(payAmt(p), 0)} ${curShort(payCur(p))}`;
 const EYE_OFF = `<svg class="eyeoff" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7a12.6 12.6 0 0 1-3 4.3M6.1 6.2C3.9 7.6 2.5 9.8 2 12c1 2.5 5 7 10 7a9.7 9.7 0 0 0 4.2-.9"/></svg>`;
 const active = () => S.packs.find(p => p.id === S.activeId) || S.packs[0];
 
@@ -1577,8 +1592,15 @@ function validatePack(p, f = curFolder()){
     if (name.length > 100) add("name", "warn", `ชื่อยาว ${name.length} ตัวอักษร อาจแสดงไม่ครบบนหน้าร้าน`);
   }
   const price = String(p.price ?? "").trim();
-  if (price === "" || !(n(price) > 0)) add("price", "err", "ใส่ราคาขายมากกว่า 0 (ใช้คำนวณ SP, GSP และ EXP)", price === "" || n(price) === 0);
-  else if (!isInt(price)) add("price", "warn", "ราคามีทศนิยม · SP และ EXP จะเป็นทศนิยมด้วย");
+  if (isSP(p)) {
+    if (price === "" || !(n(price) > 0)) add("price", "err", "ใส่ราคาขายมากกว่า 0 (ใช้คำนวณ SP, GSP และ EXP)", price === "" || n(price) === 0);
+    else if (!isInt(price)) add("price", "warn", "ราคามีทศนิยม · SP และ EXP จะเป็นทศนิยมด้วย");
+  } else {
+    const cp = String(p.curPrice ?? "").trim();
+    if (cp === "" || !(n(cp) > 0)) add("curPrice", "err", `ใส่ราคาเป็น ${payCur(p)} มากกว่า 0`, cp === "");
+    if (p.bonus !== false) add("cur", "warn", `แพ็กนี้ซื้อด้วย ${payCur(p)} แต่เลือก “ได้รับ GSP + Player EXP” ไว้ · ตรวจสอบว่าต้องให้โบนัสจริงหรือไม่`);
+    if (p.bonus !== false && !(n(price) > 0)) add("price", "err", "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
+  }
   if (String(p.pos ?? "").trim() !== "" && !isInt(p.pos)) add("pos", "err", "ลำดับแสดงต้องเป็นจำนวนเต็ม");
   const lim = String(p.limit ?? "").trim();
   if (lim === "") add("limit", "err", "ใส่ Limit 0–99 (0 = ซื้อได้ไม่จำกัด)", true);
@@ -1706,7 +1728,7 @@ function resetSchedHTML(p){
 /* ---------- variant B: the pack is built in four steps; one step shows at a time ---------- */
 const BSTEPS = [
   { n:1, t:"ไอเทมในแพ็ก", d:"หยิบของลงแพ็ก จำนวน และเรทสุ่ม", f:"items item:" },
-  { n:2, t:"ตั้งค่าแพ็ก", d:"ข้อมูลแพ็ก ช่วงขาย หมวดและป้าย", f:"name price start startTime end endTime limit pos every firstDate firstTime azCat" } ];
+  { n:2, t:"ตั้งค่าแพ็ก", d:"ข้อมูลแพ็ก ช่วงขาย หมวดและป้าย", f:"name price cur curPrice start startTime end endTime limit pos every firstDate firstTime azCat" } ];
 const BS = { step:1, rail: lsGet("tosm-pack-builder:rail") !== "0" };      // rail open by default; remembered per browser
 const HAM = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
 const stepOf = f => f === "items" || f.startsWith("item:") ? 1 : 2;
@@ -1735,15 +1757,23 @@ function renderEditor(){
   const st = BSTEPS[BS.step - 1];
   let body = "";
   if (BS.step === 2) body = `
-  ${sec(1, "ข้อมูลแพ็ก", "ชื่อและราคาใช้เป็นชื่อ Bundle และราคา SP ใน Aztek", "name price", `<div class="packhead">
+  ${sec(1, "ข้อมูลแพ็ก", "ชื่อและราคาใช้เป็นชื่อ Bundle และราคาสินค้าใน Aztek", "name price cur curPrice", `<div class="packhead">
     <div class="fld name wide2"><label for="p-name">ชื่อแพ็ก${req("name")}</label><input id="p-name" data-f="name" ${va("name")} value="${esc(p.name)}" placeholder="เช่น แพ็กสุ่มรายวัน">${vm("name")}</div>
     <div class="fld"><label>รูปแบบ</label>
       <div class="seg" role="group" aria-label="รูปแบบแพ็ก"><button data-mode="fixed" aria-pressed="${!rnd}">Fixed</button><button data-mode="random" aria-pressed="${rnd}">Random</button></div>
       <span class="hint">${rnd ? "มีของสุ่ม และของที่ได้แน่นอนได้" : "ได้ไอเทมทุกชิ้นทุกครั้ง"}</span></div>
-    <div class="fld"><label for="p-price">ราคาขาย (THB)${req("price")}</label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint" id="p-sp">= ${fmt(n(p.price) * 10)} SP</span>${vm("price")}</div>
+    <div class="fld"><label for="p-cur">สกุลเงินที่ใช้ซื้อ</label>
+      <select id="p-cur" ${va("cur")}>${(() => { const c = payCur(p), inList = PAY_CURS.includes(c);
+        return PAY_CURS.map(x => `<option value="${esc(x)}"${c === x && !p._curCustom ? " selected" : ""}>${esc(x)}</option>`).join("")
+          + `<option value="__custom"${!inList || p._curCustom ? " selected" : ""}>กรอกเอง…</option>`; })()}</select>
+      ${!PAY_CURS.includes(payCur(p)) || p._curCustom ? `<input id="p-curc" data-f="currency" value="${esc(p.currency || "")}" placeholder="ชื่อสกุลเงินตามใน Aztek" aria-label="ชื่อสกุลเงิน (กรอกเอง)">` : ""}
+      <span class="hint">ต้องตรงกับชื่อใน Aztek</span>${vm("cur")}</div>
+    ${isSP(p) ? `<div class="fld"><label for="p-price">ราคาขาย (THB)${req("price")}</label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint" id="p-sp">= ${payText(p)}</span>${vm("price")}</div>`
+      : `<div class="fld"><label for="p-curprice">ราคา (${esc(curLabel(p))})<span class="req" aria-hidden="true">*</span></label><input id="p-curprice" type="number" min="0" step="1" data-f="curPrice" ${va("curPrice")} aria-required="true" value="${esc(p.curPrice ?? "")}">${vm("curPrice")}</div>
+    <div class="fld"><label for="p-price">มูลค่าเทียบเป็นบาท <span class="opt-l">ไม่บังคับ</span></label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint">ใช้คำนวณความคุ้ม และ GSP / EXP</span>${vm("price")}</div>`}
     <div class="fld wide2"><span class="lbl">โบนัสเมื่อซื้อ</span>
       <label class="chk"><input type="checkbox" id="p-bonus" ${p.bonus !== false ? "checked" : ""}> ได้รับ GSP + Player EXP</label>
-      <span class="hint">${p.bonus !== false ? `ได้ GSP ${fmt(r.gsp)} และ EXP ${fmt(r.exp)} ต่อครั้ง (GSP = ราคา × 10 · EXP = ราคา)` : "ไม่ได้รับ · ไม่แสดงบนหน้าร้าน และไม่ใส่ในไฟล์ Bundle"}</span></div>
+      <span class="hint" id="p-bonus-h">${p.bonus !== false ? `ได้ GSP ${fmt(r.gsp)} และ EXP ${fmt(r.exp)} ต่อครั้ง (GSP = ราคา × 10 · EXP = ราคา)` : "ไม่ได้รับ · ไม่แสดงบนหน้าร้าน และไม่ใส่ในไฟล์ Bundle"}</span></div>
     <div class="fld img wide2"><label for="p-image">รูปแพ็ก <span class="opt-l">ไม่บังคับ</span></label>
       <div class="imgrow"><input id="p-image" type="url" data-f="image" placeholder="ลิงก์ CDN เช่น https://cdn.exe.in.th/…/pack.png" value="${esc(p.image)}">
       <span class="imgprev">${p.image ? `<img src="${esc(p.image)}" alt="" onerror="this.parentNode.classList.add('bad')">` : ""}</span></div></div>
@@ -2361,14 +2391,14 @@ function boardCol(p){
       <div class="bc-t"><span class="bc-grip" draggable="true" data-bcolgrip="${p.id}" title="ลากเพื่อย้ายคอลัมน์">⋮⋮</span>
         <input class="bc-name${bcls(d.f.name)}" data-bf="${p.id}|name" value="${esc(p.name)}" aria-label="ชื่อแพ็ก">
         <span class="bc-menu"><button class="bc-menu-btn" data-bmenu="${p.id}" aria-label="เมนูแพ็ก">⋯</button>
-          ${BV.menu === p.id ? `<span class="bc-pop"><button data-bact="dup|${p.id}">ทำสำเนาแพ็ก</button><button data-bact="open|${p.id}">เปิดในหน้าจัดแพ็ก</button>
+          ${BV.menu === p.id ? `<span class="bc-pop"><button data-bact="dup|${p.id}">ทำสำเนาแพ็ก</button><button data-bact="open|${p.id}">เปิดในหน้าจัดแพ็ก</button><button data-bact="hide|${p.id}">ซ่อนแพ็ก</button>
             <button class="danger" data-bact="del|${p.id}">${BV.armed === p.id ? "กดอีกครั้งเพื่อลบ" : "ลบแพ็ก"}</button></span>` : ""}</span></div>
       <div class="bc-tags"><span class="bc-tag${bcls(d.f.mode)}">${rnd ? "Random" : "Fixed"}</span>${d.isNew ? `<span class="bc-tag">แพ็กใหม่</span>` : ""}${ri.on ? `<span class="bc-tag">Reset ${ri.every} วัน</span>` : ""}</div>
     </div>
     <div class="bc-s">
       <div class="bc-zh">⚙ ตั้งค่าแพ็ก</div>
       <div class="bc-disc"><span><span class="v ${st.dc}" data-bstat="${p.id}|disc">${st.disc}</span></span><span class="l" data-bstat="${p.id}|label">${st.label}</span></div>
-      <div class="bc-f"><label>ราคา (THB)</label><input type="number" min="0" step="1" data-bf="${p.id}|price" value="${esc(p.price)}" class="${bcls(d.f.price).trim()}"><span class="sub" data-bstat="${p.id}|sp">= ${fmt(n(p.price)*10)} SP</span></div>
+      <div class="bc-f"><label>${isSP(p) ? "ราคา (THB)" : "มูลค่า (THB)"}</label><input type="number" min="0" step="1" data-bf="${p.id}|price" value="${esc(p.price)}" class="${bcls(d.f.price).trim()}"><span class="sub" data-bstat="${p.id}|sp">${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}</span></div>
       <div class="bc-f"><label>Limit / ID${ri.on ? " / รอบ" : ""}</label><input type="number" min="0" step="1" data-bf="${p.id}|limit" value="${esc(p.limit)}" class="${bcls(d.f.limit).trim()}"><span class="sub">${n(p.limit) > 0 ? "" : "ไม่จำกัด"}</span></div>
       <div class="bc-f"><label>${rnd ? "EV / ครั้ง" : "มูลค่ารวม"}</label><span class="ro" data-bstat="${p.id}|value">${st.value}</span></div>
       <div class="bc-f"><label>ไอเทม</label><span class="ro">${p.items.length} รายการ</span></div>
@@ -2429,7 +2459,7 @@ function newPackItem(it){
 function updateColStats(pid){
   const p = S.packs.find(x => x.id === pid); if (!p) return; const st = colStats(p);
   const set = (k, v, cls) => { const e = document.querySelector(`[data-bstat="${pid}|${k}"]`); if (e) { e.textContent = v; if (cls != null) e.className = "v " + cls; } };
-  set("disc", st.disc, st.dc); set("label", st.label); set("value", st.value); set("sp", `= ${fmt(n(p.price)*10)} SP`);
+  set("disc", st.disc, st.dc); set("label", st.label); set("value", st.value); set("sp", `${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}`);
   const w = document.querySelector(`[data-bstat="${pid}|warn"]`); if (w) w.textContent = `โอกาสรวม ${fmt(st.r.chanceSum,4)}% (ควรเป็น 100%)`;
 }
 const findItem = (pid, u) => { const p = S.packs.find(x => x.id === pid); return { p, x: p?.items.find(i => i.uid === u) }; };
@@ -2471,6 +2501,7 @@ B.addEventListener("click", e => {
   if (t.dataset.bmenu) { BV.menu = BV.menu === t.dataset.bmenu ? null : t.dataset.bmenu; BV.armed = null; renderBoard(); return; }
   if (t.dataset.bact) { const [a, pid] = t.dataset.bact.split("|"), p = S.packs.find(x => x.id === pid); if (!p) return;
     if (a === "open") { S.activeId = pid; save(false); BV.menu = null; showView("build"); return; }
+    if (a === "hide") { BV.menu = null; toast(`ซ่อน “${p.name}” แล้ว · เลิกซ่อนได้ที่หน้าจัดแพ็ก`); return mut(() => { p.hidden = true; }); }
     if (a === "dup") { BV.menu = null; return mut(() => { const c = JSON.parse(JSON.stringify(p)); c.id = uid(); c.name += " (สำเนา)"; c.items.forEach(x => x.uid = uid()); S.packs.splice(S.packs.indexOf(p) + 1, 0, c); }); }
     if (a === "del") { if (BV.armed !== pid) { BV.armed = pid; renderBoard(); return; }
       BV.menu = BV.armed = null; return mut(() => { S.packs = S.packs.filter(x => x !== p); if (!S.packs.length) S.packs.push(blankPack({ name:"แพ็ก 1" })); if (S.activeId === pid) S.activeId = S.packs[0].id; }); } }
@@ -2560,7 +2591,7 @@ function shopCard(p, team){ const r = calc(p), rl = resetLabel(p), dc = discClas
       ${p.bonus !== false ? `<span class="sh-gsp"><i class="leaf"></i>+ ${sp(p.price)}</span>` : `<span class="sh-gsp none" aria-hidden="true"></span>`}
       <span class="sh-name" title="${esc(p.name)}">${esc(p.name)}</span>
       <span class="sh-lim">${n(p.limit) > 0 ? "มีการจำกัดการซื้อ" : "ซื้อได้ไม่จำกัด"}</span>
-      <span class="sh-buy"><span class="sh-btn">ซื้อ</span><span class="sh-price"><i class="spi"></i>${sp(p.price)} <small>SP</small></span></span>
+      <span class="sh-buy"><span class="sh-btn">ซื้อ</span><span class="sh-price">${isSP(p) ? `<i class="spi"></i>` : `<i class="cui"></i>`}${fmt(payAmt(p), 0)} <small>${esc(curShort(payCur(p)))}</small></span></span>
       ${team ? `<span class="sh-team ${dc === "disc-good" ? "good" : dc === "disc-low" ? "low" : ""}"><span>${!isFinite(r.disc) ? "ยังไม่มีมูลค่า" : r.disc < 0 ? `แพงกว่ามูลค่า ${fmt(-r.disc*100,1)}%` : `ลด ${fmt(r.disc*100,1)}%`}</span><span>${p.mode === "random" ? "EV" : "มูลค่า"} ฿${fmt(Math.round(r.value))}</span></span>` : ""}
     </div>`; }
 function renderPresent(){
@@ -2598,13 +2629,15 @@ function summaryRows(){
     const W = rnd ? p.items.reduce((a, x) => a + (x.fixed ? 0 : n(x.chance)), 0) : 0;
     const items = p.items.map(x => { const share = !rnd || x.fixed ? 1 : W > 0 ? n(x.chance) / W : 0;
       return { x, rand:rnd && !x.fixed, sum: buys == null ? null : n(x.amt) * share * buys }; });
-    return { p, rnd, ri, lim, rounds, buys, items, paid: buys == null ? null : n(p.price) * buys };
+    const sp = isSP(p), cur = payCur(p);
+    return { p, rnd, ri, lim, rounds, buys, items, sp, cur, paid: !sp || buys == null ? null : n(p.price) * buys, curPaid: sp || buys == null ? null : n(p.curPrice) * buys };
   });
 }
 function summaryTableHTML(){
   const R = summaryRows();
   if (!R.length) return `<div class="sh-empty">ยังไม่มีแพ็ก</div>`;
-  const tPrice = R.reduce((a, r) => a + n(r.p.price), 0), tPaid = R.reduce((a, r) => a + (r.paid || 0), 0), open = R.filter(r => r.paid == null).length;
+  const tPrice = R.reduce((a, r) => a + (r.sp ? n(r.p.price) : 0), 0), tPaid = R.reduce((a, r) => a + (r.paid || 0), 0), open = R.filter(r => r.sp && r.paid == null).length;
+  const other = curTotals(R);
   const amt = v => fmt(v, v % 1 ? 1 : 0);
   const body = R.map((r, k) => { const rows = Math.max(1, r.items.length), cls = k % 2 ? "b" : "a";
     const limTxt = r.lim > 0 ? `${fmt(r.lim, 0)}${r.ri.on ? `<small>${r.rounds ? `ต่อรอบ × ${r.rounds} รอบ` : "ต่อรอบ · ยังไม่มีวันจบ"}</small>` : ""}` : `<small>ไม่จำกัด</small>`;
@@ -2615,8 +2648,8 @@ function summaryTableHTML(){
         <td class="nm">${esc(it.x.name || "(ไม่มีชื่อ)")}${it.rand ? `<span class="rt">สุ่ม ${fmt(n(it.x.chance), 4)}%</span>` : ""}</td>
         <td class="r">${fmt(n(it.x.amt), 0)}</td>`; })();
     const sumCell = it => `<td class="r">${!it || it.sum == null ? "–" : (it.rand ? "≈ " : "") + amt(it.sum)}</td>`;
-    const packCells = `<td class="r money" rowspan="${rows}">฿${fmt(n(r.p.price), 2)}<small class="pn">${esc(r.p.name)}</small></td><td class="r" rowspan="${rows}">${limTxt}</td>`;
-    const paidCell = `<td class="r money" rowspan="${rows}">${r.paid == null ? "–" : "฿" + fmt(r.paid, 2)}</td>`;
+    const packCells = `<td class="r money" rowspan="${rows}">${r.sp ? "฿" + fmt(n(r.p.price), 2) : payText(r.p)}<small class="pn">${esc(r.p.name)}</small></td><td class="r" rowspan="${rows}">${limTxt}</td>`;
+    const paidCell = `<td class="r money" rowspan="${rows}">${r.sp ? (r.paid == null ? "–" : "฿" + fmt(r.paid, 2)) : r.curPaid == null ? "–" : `${fmt(r.curPaid, 0)} ${esc(curShort(r.cur))}`}</td>`;
     return [`<tr class="${cls} first">${head}${itemCells(first)}${packCells}${sumCell(first)}${paidCell}</tr>`,
       ...r.items.slice(1).map(it => `<tr class="${cls}">${itemCells(it)}${sumCell(it)}</tr>`)].join("");
   }).join("");
@@ -2626,8 +2659,13 @@ function summaryTableHTML(){
     <div class="sm-scroll"><table class="sm-t">
       <thead><tr><th>No</th><th></th><th class="l">ไอเทม</th><th>Amt</th><th>ราคา</th><th>Limit</th><th>Sum Amt</th><th>Total Paid</th></tr></thead>
       <tbody>${body}</tbody>
-      <tfoot><tr><td colspan="4"></td><td class="r money">฿${fmt(tPrice, 2)}</td><td colspan="2" class="r note">${open ? `ไม่รวม ${open} แพ็กที่ไม่จำกัด` : ""}</td><td class="r money grand">฿${fmt(tPaid, 2)}</td></tr></tfoot>
+      <tfoot><tr><td colspan="4"></td><td class="r money">฿${fmt(tPrice, 2)}</td><td colspan="2" class="r note">${[open ? `ไม่รวม ${open} แพ็กที่ไม่จำกัด` : "", other ? `สกุลเงินอื่น: ${other}` : ""].filter(Boolean).join(" · ")}</td><td class="r money grand">฿${fmt(tPaid, 2)}</td></tr></tfoot>
     </table></div></div>`;
+}
+/* totals of packs bought with currencies other than Seed Point, e.g. "600 God Coin 1 · 40 GSP" */
+function curTotals(R){
+  const m = new Map(); R.forEach(r => { if (!r.sp && r.curPaid != null) m.set(r.cur, (m.get(r.cur) || 0) + r.curPaid); });
+  return [...m].map(([c, v]) => `${fmt(v, 0)} ${esc(curShort(c))}`).join(" · ");
 }
 /* summary, friendly view: one sentence with the total, a spend bar split by pack, then each pack as "price × buys = paid" */
 const SM = { view:"cards", pick:null };
@@ -2636,8 +2674,8 @@ function summaryHTML(){
   const R = summaryRows();
   if (!R.length) return `<div class="sh-empty">ยังไม่มีแพ็กในโฟลเดอร์นี้ · เพิ่มแพ็กที่หน้า จัดแพ็ก</div>`;
   if (SM.view === "table") return summaryToggle() + summaryTableHTML();
-  const paid = R.reduce((a, r) => a + (r.paid || 0), 0), price = R.reduce((a, r) => a + n(r.p.price), 0);
-  const counted = R.filter(r => r.paid != null), open = R.length - counted.length;
+  const paid = R.reduce((a, r) => a + (r.paid || 0), 0), price = R.reduce((a, r) => a + (r.sp ? n(r.p.price) : 0), 0);
+  const counted = R.filter(r => r.paid != null), open = R.filter(r => r.sp && r.paid == null).length, other = curTotals(R);
   const col = i => SEG[i % SEG.length];
   const amt = v => fmt(v, v % 1 ? 1 : 0);
   const bar = counted.map((r, k) => { const i = R.indexOf(r), w = paid ? r.paid / paid * 100 : 0;
@@ -2655,15 +2693,16 @@ function summaryHTML(){
         <p class="sv-tags"><span>${r.rnd ? "Random" : "Fixed"}</span>${r.ri.on ? `<span>Reset ทุก ${r.ri.every} วัน</span>` : ""}${catOf(r.p) ? `<span>${esc(catLabel(catOf(r.p)))}</span>` : ""}</p>
         <ul class="sv-items" aria-label="ไอเทมใน ${esc(r.p.name)}">${items}</ul></div>
       <div class="sv-math">
-        <div class="eq"><span>฿${fmt(n(r.p.price), 2)}</span><i>×</i><span>${buysTxt}</span></div>
-        <div class="res">${r.paid == null ? `<span class="na">ไม่นับในยอดรวม</span>` : `฿${fmt(r.paid, 2)}`}</div>
-        ${share != null ? `<div class="sh"><span style="width:${share}%"></span></div><small>${fmt(share, 1)}% ของยอดรวม</small>` : `<small>${r.lim > 0 ? "ใส่วันจบเพื่อคำนวณรอบ" : "ซื้อได้ไม่จำกัด"}</small>`}
+        <div class="eq"><span>${r.sp ? "฿" + fmt(n(r.p.price), 2) : payText(r.p)}</span><i>×</i><span>${buysTxt}</span></div>
+        <div class="res">${r.sp ? (r.paid == null ? `<span class="na">ไม่นับในยอดรวม</span>` : `฿${fmt(r.paid, 2)}`) : r.curPaid == null ? `<span class="na">ไม่นับในยอดรวม</span>` : `<span class="cur">${fmt(r.curPaid, 0)} ${esc(curShort(r.cur))}</span>`}</div>
+        ${share != null ? `<div class="sh"><span style="width:${share}%"></span></div><small>${fmt(share, 1)}% ของยอดรวม</small>` : `<small>${!r.sp ? "ซื้อด้วยสกุลเงินอื่น · แยกจากยอดเงินบาท" : r.lim > 0 ? "ใส่วันจบเพื่อคำนวณรอบ" : "ซื้อได้ไม่จำกัด"}</small>`}
       </div></article>`; }).join("");
   return summaryToggle() + `<div class="sv">
     <section class="sv-lead">
       <p class="sv-say">ถ้า 1 ID ซื้อครบ Limit ทุกแพ็ก จะจ่าย</p>
       <p class="sv-big">฿${fmt(paid, 2)}</p>
       <p class="sv-sub">จาก ${R.length} แพ็ก · ซื้อทุกแพ็กอย่างละ 1 ครั้ง ฿${fmt(price, 2)}${open ? ` · ไม่รวม ${open} แพ็กที่ซื้อได้ไม่จำกัด` : ""}${R.some(r => r.ri.on) ? " · แพ็กที่มี Reset นับทุกรอบตลอดโปร" : ""}</p>
+      ${other ? `<p class="sv-other">และจ่ายด้วยสกุลเงินอื่นอีก <b>${other}</b></p>` : ""}
       ${counted.length ? `<div class="sv-bar" role="group" aria-label="สัดส่วนยอดจ่ายของแต่ละแพ็ก">${bar}</div>
       <p class="sv-hint">${top ? `ยอดมาจาก <b>${esc(top.p.name)}</b> มากที่สุด (${fmt(top.paid / paid * 100, 0)}%) · ` : ""}กดที่แถบเพื่อไปยังแพ็กนั้น</p>` : ""}
     </section>
@@ -2676,9 +2715,9 @@ async function copySummary(){
   const R = summaryRows(), out = [["No","Item","Amt","Chance","Price (THB)","Limit","Rounds","Sum Amt","Total Paid"].join("\t")];
   R.forEach((r, k) => (r.items.length ? r.items : [null]).forEach((it, j) => out.push([
     j ? "" : k + 1, it ? it.x.name : "", it ? n(it.x.amt) : "", it && it.rand ? n(it.x.chance) + "%" : "",
-    j ? "" : n(r.p.price), j ? "" : (r.lim > 0 ? r.lim : "ไม่จำกัด"), j ? "" : (r.ri.on ? r.rounds ?? "" : 1),
-    it && it.sum != null ? +it.sum.toFixed(2) : "", j ? "" : (r.paid ?? "")].join("\t"))));
-  out.push(["", "รวม", "", "", R.reduce((a, r) => a + n(r.p.price), 0), "", "", "", R.reduce((a, r) => a + (r.paid || 0), 0)].join("\t"));
+    j ? "" : (r.sp ? n(r.p.price) : payText(r.p)), j ? "" : (r.lim > 0 ? r.lim : "ไม่จำกัด"), j ? "" : (r.ri.on ? r.rounds ?? "" : 1),
+    it && it.sum != null ? +it.sum.toFixed(2) : "", j ? "" : (r.sp ? (r.paid ?? "") : r.curPaid == null ? "" : `${r.curPaid} ${curShort(r.cur)}`)].join("\t"))));
+  out.push(["", "รวม (THB)", "", "", R.reduce((a, r) => a + (r.sp ? n(r.p.price) : 0), 0), "", "", "", R.reduce((a, r) => a + (r.paid || 0), 0)].join("\t"));
   try { await navigator.clipboard.writeText(out.join("\n")); toast("คัดลอกตารางสรุปแล้ว วางใน Google Sheet ได้เลย"); } catch { toast("คัดลอกไม่ได้"); }
 }
 function modalHTML(p){
@@ -2702,7 +2741,7 @@ function modalHTML(p){
     const W = pool.reduce((a,x) => a + n(x.chance), 0);
     const haul = rnd ? p.items.map((x,i) => ({ x, pcs: 10 * (x.fixed ? 1 : W ? n(x.chance) / W : 0) * n(x.amt) })).filter(o => o.pcs > 0).sort((a,b) => (b.x.fixed - a.x.fixed) || (b.pcs - a.pcs)).slice(0,6) : [];
     team = `<div class="sh-teamsec"><h4>สำหรับทีม (ผู้เล่นไม่เห็นส่วนนี้)</h4><div class="sh-kv">
-      <span>ราคา</span><span>฿${fmt(r.price)} · ${sp(p.price)} SP</span>
+      <span>ราคา</span><span>${isSP(p) ? `฿${fmt(r.price)} · ${payText(p)}` : `${payText(p)}${n(p.price) > 0 ? ` · เทียบ ฿${fmt(r.price)}` : ""}`}</span>
       <span>${rnd ? "มูลค่าเฉลี่ย / ครั้ง (ของสุ่ม + ของแน่นอน)" : "มูลค่าของในแพ็ก"}</span><span>฿${fmt(r.value)}</span>
       ${rnd && r.fixedTHB ? `<span>ของที่ได้แน่นอน / ครั้ง</span><span>฿${fmt(r.fixedTHB)}</span>` : ""}
       <span>ส่วนลด</span><span>${!isFinite(r.disc) ? "–" : r.disc < 0 ? "แพงกว่ามูลค่า " + fmt(-r.disc*100,1) + "%" : fmt(r.disc*100,1) + "% (" + verdict(r.disc) + ")"}</span>
@@ -2718,7 +2757,7 @@ function modalHTML(p){
       <div class="meta">${rl ? `<span class="rs">${esc(rl)}</span>` : ""}<span class="nm">${esc(p.name)}</span>
         ${PV.team && String(p.idea || "").trim() ? `<span class="idea"><b>แนวคิดแพ็ก</b>${esc(p.idea).replace(/\n/g, "<br>")}</span>` : ""}
         <span class="bds">${sortTypes(p.types).map(badge).join("")}</span></div>
-      <div class="pr"><i class="spi"></i>${sp(p.price)} <small>SP</small></div></div>
+      <div class="pr">${isSP(p) ? `<i class="spi"></i>` : `<i class="cui"></i>`}${fmt(payAmt(p), 0)} <small>${esc(curShort(payCur(p)))}</small></div></div>
     <div class="sh-sec">เงื่อนไขการซื้อ</div>
     <div class="sh-rows">${conds.map(([a,b]) => `<div class="sh-row cond"><span>${a}</span><span>${b}</span></div>`).join("")}</div>
     ${fixed.length ? `<div class="sh-sec">ไอเทมที่จะได้รับ</div><div class="sh-rows">${fixed.map(row).join("")}</div>` : ""}
@@ -2761,7 +2800,8 @@ document.addEventListener("input", e => {
   if (t.matches("#q")) { clearTimeout(rerenderTimer); rerenderTimer = setTimeout(renderLib, 120); return; }
   const p = active();
   if (t.dataset.f) { p[t.dataset.f] = t.value; save(); renderRight(); refreshSched(); paintIssues();
-    if (t.dataset.f === "price") { const sp = $("#p-sp"); if (sp) sp.textContent = `= ${fmt(n(p.price) * 10)} SP`; }
+    if (t.dataset.f === "price") { const sp = $("#p-sp"); if (sp) sp.textContent = `= ${payText(p)}`;
+      const bh = $("#p-bonus-h"), r = calc(p); if (bh && p.bonus !== false) bh.textContent = `ได้ GSP ${fmt(r.gsp)} และ EXP ${fmt(r.exp)} ต่อครั้ง (GSP = ราคา × 10 · EXP = ราคา)`; }
     if (t.dataset.f === "azCat") { const w = document.querySelector(".azrow .warnt"); if (w) w.hidden = !!azCatOf(p); }
     return; }
   if (t.dataset.rf) { p.reset[t.dataset.rf] = t.value; save(); renderRight(); refreshSched(); paintIssues(); return; }
@@ -2779,6 +2819,8 @@ document.addEventListener("change", e => {
   if (t.matches("#f-type,#f-grade,#f-trade,#f-class")) { renderLib(); return; }
   if (t.id === "p-image") { renderEditor(); renderRight(); return; }
   if (t.id === "p-bonus") { const p = active(); p.bonus = t.checked; save(); renderEditor(); renderRight(); return; }
+  if (t.id === "p-cur") { const p = active(); if (t.value === "__custom") { p._curCustom = true; if (PAY_CURS.includes(payCur(p))) p.currency = ""; }
+    else { p._curCustom = false; p.currency = t.value === "Seed Point" ? "" : t.value; } save(); renderEditor(); renderRight(); if (p._curCustom) $("#p-curc")?.focus(); return; }
   if (t.id === "p-az") { const p = active(); if (t.value === "__custom") { p._azCustom = true; if (azList().includes(p.azCat)) p.azCat = ""; } else { p._azCustom = false; p.azCat = t.value; }
     save(); renderEditor(); if (t.value === "__custom") $("#p-azc")?.focus(); return; }
   // custom item: typing a known Item ID fills its name and remembered values
@@ -3010,7 +3052,7 @@ function xlItemRow(x){
 function xlPack(p){
   const errors = [], warns = [], name = String(p.name || "").trim(), price = n(p.price), seed = n(S.settings.seed) || 10;
   if (!name) errors.push("ยังไม่มีชื่อแพ็ก");
-  if (!(price > 0)) errors.push("ยังไม่ได้ใส่ราคา (ต้องใช้คำนวณ GSP / EXP)");
+  if (isSP(p) ? !(price > 0) : p.bonus !== false && !(price > 0)) errors.push(isSP(p) ? "ยังไม่ได้ใส่ราคา (ต้องใช้คำนวณ GSP / EXP)" : "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
   const rnd = p.mode === "random";
   const sure = p.items.filter(x => !rnd || x.fixed), pool = rnd ? p.items.filter(x => !x.fixed) : [];
   const mk = (bundle, type, list, isRand) => {
@@ -3075,16 +3117,16 @@ const xlDT = (d, t) => d ? `${d} ${(t || "00:00").slice(0,5)}:00` : "";
 function xlProduct(p){
   const errors = [], name = String(p.name || "").trim(), price = n(p.price), seed = n(S.settings.seed) || 10, rs = p.reset || {};
   if (!name) errors.push("ยังไม่มีชื่อแพ็ก");
-  if (!(price > 0)) errors.push("ยังไม่ได้ใส่ราคา");
+  if (isSP(p) ? !(price > 0) : !(n(p.curPrice) > 0)) errors.push("ยังไม่ได้ใส่ราคา");
   const cat = azCatOf(p); if (!cat) errors.push("ยังไม่ได้เลือกหมวดหมู่ใน Aztek");
   if (!p.start) errors.push("ยังไม่ได้ใส่วันเริ่มขาย"); if (!p.end) errors.push("ยังไม่ได้ใส่วันหยุดขาย");
   if (rs.on && !rs.firstDate) errors.push("เลือก Reset แต่ยังไม่ได้ใส่วัน Reset ครั้งแรก");
-  const sp = price * seed;
+  const sp = payAmt(p);
   const row = ["GAME", name, name, cat, sortTypes(p.types).map(TAG_NAME).join(", "), "", "", "", "", "", "",
     n(p.pos), xlDT(p.start, p.startTime), xlDT(p.end, p.endTime),
     n(p.limit) > 0 ? n(p.limit) : "", "", "", "",
     rs.on ? Math.max(1, Math.floor(n(rs.every)) || 1) : "", "", rs.on ? xlDT(rs.firstDate, rs.firstTime) : "",
-    "TRUE", "TRUE", "FALSE", "Seed Point", sp, sp, "", "", "", "", "", "",
+    "TRUE", "TRUE", "FALSE", payCur(p), sp, sp, "", "", "", "", "", "",
     ...(p.mode === "random" && !p.items.some(x => x.fixed) && p.bonus === false ? [name + " - Random", ""] : [name, p.mode === "random" ? name + " - Random" : ""])];
   return { p, row, errors:[...new Set(errors)] };
 }
@@ -3116,7 +3158,7 @@ function renderExport(){
   const pRows = wantP ? chosen.map(r => r.pr.row) : [];
   const nb = chosen.reduce((a,r) => a + r.b.bundles.length, 0);
   const names = chosen.flatMap(r => r.b.bundles.map(b => b.name)), dup = [...new Set(names.filter((v,i) => names.indexOf(v) !== i))];
-  const PV_COLS = [1,3,4,11,12,13,14,18,20,25,33,34];                 // product preview: the columns that change per pack
+  const PV_COLS = [1,3,4,11,12,13,14,18,20,24,25,33,34];                 // product preview: the columns that change per pack
   ov.innerHTML = `<div class="settings xl" role="dialog" aria-labelledby="xl-t">
     <h3 id="xl-t">Export สำหรับ Aztek (.xlsx)</h3>
     <div class="xl-top">
