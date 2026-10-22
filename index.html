@@ -500,7 +500,10 @@ details.dd>summary:hover{color:var(--accent)}
 .bc-pop button:hover{background:var(--panel-2)}
 .bc-pop button.danger{color:var(--bad)}
 .bc-s{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-bottom:1px solid var(--line)}
-.bc-disc{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.bc-disc{grid-column:1/-1;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.bc-disc .bd-b{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bc-disc .bd-b.r{align-items:flex-end;text-align:right}
+.bc-disc .v.val{color:var(--ink)}
 .bc-disc .v{font:700 28px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .bc-disc .l{font-size:11px;color:var(--muted)}
 .bc-f{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -2403,10 +2406,11 @@ function boardCol(p){
     </div>
     <div class="bc-s">
       <div class="bc-zh">⚙ ตั้งค่าแพ็ก</div>
-      <div class="bc-disc"><span><span class="v ${st.dc}" data-bstat="${p.id}|disc">${st.disc}</span></span><span class="l" data-bstat="${p.id}|label">${st.label}</span></div>
+      <div class="bc-disc">
+        <span class="bd-b"><span class="v val" data-bstat="${p.id}|value">${st.value}</span><span class="l">${rnd ? "EV ต่อครั้ง" : "มูลค่าต่อครั้ง"}</span></span>
+        <span class="bd-b r"><span class="v ${st.dc}" data-bstat="${p.id}|disc">${st.disc}</span><span class="l" data-bstat="${p.id}|label">${st.label}</span></span></div>
       <div class="bc-f"><label>${isSP(p) ? "ราคา (THB)" : "มูลค่า (THB)"}</label><input type="number" min="0" step="1" data-bf="${p.id}|price" value="${esc(p.price)}" class="${bcls(d.f.price).trim()}"><span class="sub" data-bstat="${p.id}|sp">${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}</span></div>
       <div class="bc-f"><label>Limit / ID${ri.on ? " / รอบ" : ""}</label><input type="number" min="0" step="1" data-bf="${p.id}|limit" value="${esc(p.limit)}" class="${bcls(d.f.limit).trim()}"><span class="sub">${n(p.limit) > 0 ? "" : "ไม่จำกัด"}</span></div>
-      <div class="bc-f"><label>${rnd ? "EV / ครั้ง" : "มูลค่ารวม"}</label><span class="ro" data-bstat="${p.id}|value">${st.value}</span></div>
       <div class="bc-f"><label>ไอเทม</label><span class="ro">${p.items.length} รายการ</span></div>
       <details class="bc-more" data-bmore="${p.id}"${BV.more.has(p.id) ? " open" : ""}><summary>${rnd ? "ซื้อครบ Limit จะได้อะไร (P25 / P50 / P75)" : "ซื้อครบ Limit จ่ายเท่าไร ได้อะไร"}</summary>
         ${BV.more.has(p.id) ? (rnd ? limitDistHTML(p) : limitHaulHTML(p, st.r, true)) : ""}
