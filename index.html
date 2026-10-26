@@ -1006,6 +1006,59 @@ td .cell.v-err{background:var(--bad-soft)}
 .sv-other{margin:-8px 0 16px;font-size:14px;color:#ffe9a8}
 .sv-math .res .cur{font-size:20px}
 #p-curc{margin-top:4px}
+
+/* exchange shop */
+.hm-kind{display:inline-block;margin-right:8px;font-size:11px;font-weight:600;color:#fff;background:#0f766e;border-radius:999px;padding:1px 8px;vertical-align:2px}
+#view-shop{min-height:calc(100vh - 56px);background:var(--bg);padding:20px 16px 48px}
+.shp{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.shp-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.shp-h h1{margin:0;font:600 24px var(--f-display)}
+.shp-h p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.shp-acts{display:flex;gap:8px;flex-wrap:wrap}
+.shp-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.shp-card h2{margin:0 0 12px;font:600 16px var(--f-display)}
+.shp-card h2 small{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.shp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px}
+.shp-grid .fld.when{grid-column:span 2}
+.shp-sum{border-radius:12px;padding:18px 22px;background:linear-gradient(120deg,#0f4f55,#14706f);color:#fff}
+.shp-sum .say{margin:0;font-size:14px;color:#cdeeea}
+.shp-sum .big{margin:2px 0 4px;font:600 40px/1.1 var(--f-display);font-variant-numeric:tabular-nums;color:#ffe08a}
+.shp-sum .big span{font-size:18px;color:#fff;font-weight:500}
+.shp-sum .big i{font-style:normal;color:#9fd9d3;margin:0 4px}
+.shp-sum .sub{margin:0;font-size:13px;color:#cdeeea}.shp-sum .sub b{color:#ffd166;font-weight:600}
+.shp-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px}.shp-bar h2{margin:0}
+.shp-t td.it{min-width:260px;text-align:left;border:0;background:none;box-shadow:none}
+.shp-t .itc{display:flex!important;align-items:center;justify-content:flex-start!important;gap:10px;text-align:left;width:100%;margin:0}
+.shp-t td{vertical-align:middle}
+.shp-t td.it small{display:block;color:var(--muted);font-size:11px}
+.shp-t td.no{color:var(--muted);width:28px}
+.shp-t .cell{width:84px}.shp-t .cell.tp{width:64px}
+.shp-t .idin{display:flex;flex-direction:column;gap:3px}.shp-t .idin .cell{width:150px}
+.shp-t tr.hid td{opacity:.55}
+.shp-t .x.armed{color:var(--bad);font-weight:700;width:auto;padding:0 6px}
+.shp-empty{border:1px dashed var(--line);border-radius:10px;padding:28px;text-align:center;color:var(--muted)}
+.shp-empty b{color:var(--ink)}
+.shp-pok{color:var(--good)!important}
+#shp-ptext{width:100%;font:12px var(--f-mono);resize:vertical}
+/* neutral player preview: dark stage, cards with grade frame, cost pill */
+.sp-panel{background:radial-gradient(120% 90% at 50% 0%,#24344a,#141c28 70%);border-radius:14px;padding:20px 18px 24px;color:#eef3f8}
+.sp-title{text-align:center;font:700 22px var(--f-display);letter-spacing:.01em}
+.sp-when{text-align:center;font-size:12px;color:#9fb3c8;margin-top:2px}
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
+.sp-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 10px 12px;border-radius:12px;background:linear-gradient(#253549,#1c2938);border:1px solid #33475e;text-align:center}
+.sp-gr{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1;font-size:10px;font-weight:700;color:#fff;background:var(--gc);border-radius:4px;padding:0 6px}
+.sp-img{width:76px;height:76px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--gc) 22%,#0e1621);border:2px solid var(--gc);overflow:hidden}
+.sp-img img{max-width:66px;max-height:66px;object-fit:contain}.sp-img b{color:#cfe0f0;font-size:16px}
+.sp-lim{font-size:11px;color:#9fb3c8}
+.sp-nm{font-size:13px;font-weight:600;line-height:1.25;min-height:2.5em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sp-buy{display:flex;flex-direction:column;align-items:center;margin-top:2px;width:100%}
+.sp-btn{width:100%;max-width:130px;background:linear-gradient(#2fb3a3,#178a7d);border-radius:999px 999px 6px 6px;padding:3px 0;font-size:13px;font-weight:600}
+.sp-cost{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;width:100%;max-width:130px;background:#0f1822;border-radius:6px 6px 999px 999px;padding:2px 8px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.sp-cost small{font-weight:500;font-size:10px;color:#9fb3c8;margin-left:3px}.sp-cost .c2{color:#ffd166}
+.sp-none{color:#9fb3c8;text-align:center;grid-column:1/-1}
+@media (max-width:860px){.shp-grid{grid-template-columns:1fr 1fr}.shp-sum .big{font-size:30px}}
+@media (max-width:520px){.shp-grid{grid-template-columns:1fr}.shp-grid .fld.when{grid-column:auto}}
+#shs-azc{margin-top:4px}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -1124,6 +1177,7 @@ td .cell.v-err{background:var(--bad-soft)}
 </div>
 <div id="view-present" hidden></div>
 <div id="view-items" hidden></div>
+<div id="view-shop" hidden></div>
 
 <div class="modal" id="settings-modal" hidden>
 <div class="settings" id="settings" role="dialog" aria-labelledby="s-title">
@@ -1248,8 +1302,8 @@ function normalize(){
   const f = curFolder(); if (!f) S.folderId = null;
   S.packs = f ? f.packs : [];
   S.project = f ? f.name : "";
-  if (f && !S.packs.length) { const p = blankPack({ name:"แพ็ก 1" }); S.packs.push(p); }
-  if (f && !S.packs.some(p => p.id === S.activeId)) S.activeId = S.packs.some(p => p.id === f.lastActive) ? f.lastActive : S.packs[0].id;
+  if (f && !S.packs.length && f.kind !== "shop") { const p = blankPack({ name:"แพ็ก 1" }); S.packs.push(p); }
+  if (f && S.packs.length && !S.packs.some(p => p.id === S.activeId)) S.activeId = S.packs.some(p => p.id === f.lastActive) ? f.lastActive : S.packs[0].id;
 }
 normalize();
 /* reset schedule: every reset moment inside the sale window, and how many purchase rounds that makes */
@@ -1613,7 +1667,7 @@ function validatePack(p, f = curFolder()){
   if (String(p.pos ?? "").trim() !== "" && !isInt(p.pos)) add("pos", "err", "ลำดับแสดงต้องเป็นจำนวนเต็ม");
   const lim = String(p.limit ?? "").trim();
   if (lim === "") add("limit", "err", "ใส่ Limit 0–99 (0 = ซื้อได้ไม่จำกัด)", true);
-  else if (!isInt(lim) || n(lim) < 0 || n(lim) > 99) add("limit", "err", "Limit ต้องเป็นจำนวนเต็ม 0–99 (0 = ซื้อได้ไม่จำกัด)");
+  else if (!isInt(lim) || n(lim) < 0 || (n(lim) > 99 && !isShop(f))) add("limit", "err", "Limit ต้องเป็นจำนวนเต็ม 0–99 (0 = ซื้อได้ไม่จำกัด)");
   if (!p.start) add("start", "err", "เลือกวันเริ่มขาย", true);
   if (!TIME_RE.test(p.startTime || "")) add("startTime", "err", "ใส่เวลาเริ่มขาย", true);
   if (!p.end) add("end", "err", "เลือกวันจบการขาย", true);
@@ -2252,7 +2306,7 @@ function renderHome(){
       <span class="hm-tab"></span>
       <div class="hm-fh">
         ${HV.rename === f.id ? `<input class="hm-rn" id="hm-rn" data-hrename="${f.id}" value="${esc(f.name)}" aria-label="ชื่อโฟลเดอร์">`
-          : `<h3 title="${esc(f.name)}">${esc(f.name)}</h3>`}
+          : `<h3 title="${esc(f.name)}">${isShop(f) ? `<span class="hm-kind">ร้านแลกไอเทม</span>` : ""}${esc(f.name)}</h3>`}
         <span class="hm-menu"><button class="hm-mbtn" data-hmenu="${f.id}" aria-label="เมนูโฟลเดอร์">⋯</button>
           ${HV.menu === f.id ? `<span class="hm-pop">
             <button data-hact="rename|${f.id}">เปลี่ยนชื่อ</button><button data-hact="dup|${f.id}">ทำสำเนาโฟลเดอร์</button>
@@ -2265,7 +2319,8 @@ function renderHome(){
       <div class="hm-thumbs">${thumbs || `<span class="hm-empty">ยังไม่มีแพ็ก</span>`}${f.packs.length > 4 ? `<span class="hm-more">+${f.packs.length - 4}</span>` : ""}</div>
       <div class="hm-stats"><span><b>${vis.length}</b> แพ็ก${nHid ? ` <small class="hm-hid">+ ซ่อน ${nHid}</small>` : ""}</span><span><b>${rnd}</b> สุ่ม</span><span>ลดเฉลี่ย <b>${isFinite(avg) ? fmt(avg*100,0) + "%" : "–"}</b></span></div>
       ${cats.length ? `<div class="hm-cats">${cats.slice(0,4).map(c => `<span>${esc(c)}</span>`).join("")}${cats.length > 4 ? `<span>+${cats.length - 4}</span>` : ""}</div>` : ""}
-      <div class="hm-acts"><button class="btn pri" data-hgo="build|${f.id}">จัดแพ็ก</button><button class="btn" data-hgo="board|${f.id}">สรุปแพ็ก</button><button class="btn" data-hgo="present|${f.id}">นำเสนอ</button></div>
+      <div class="hm-acts">${isShop(f) ? `<button class="btn pri" data-hgo="build|${f.id}">จัดร้าน</button><button class="btn" data-hact="xlsx|${f.id}">Export</button>`
+        : `<button class="btn pri" data-hgo="build|${f.id}">จัดแพ็ก</button><button class="btn" data-hgo="board|${f.id}">สรุปแพ็ก</button><button class="btn" data-hgo="present|${f.id}">นำเสนอ</button>`}</div>
       <div class="hm-upd">แก้ไขล่าสุด ${new Date(f.updated).toLocaleString("th-TH", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}${isOpen ? " · เปิดอยู่" : ""}</div>
     </article>`; };
 
@@ -2273,7 +2328,7 @@ function renderHome(){
     <header class="hm-hero">
       <div class="hm-title"><h1>โฟลเดอร์โปรโมชัน</h1>
         <p>${S.folders.length} โฟลเดอร์ · ${totalPacks} แพ็ก${live ? ` · <b class="live">กำลังขาย ${live}</b>` : ""}${soon ? ` · กำลังจะเริ่ม ${soon}` : ""}</p></div>
-      <div class="hm-cta"><button class="btn pri big" id="hm-new">+ โฟลเดอร์ใหม่</button><button class="btn" id="hm-import">นำเข้าไฟล์ .json</button></div>
+      <div class="hm-cta"><button class="btn pri big" id="hm-new">+ โฟลเดอร์ใหม่</button><button class="btn big" id="hm-newshop">+ ร้านแลกไอเทม</button><button class="btn" id="hm-import">นำเข้าไฟล์ .json</button></div>
     </header>
     <div class="hm-tools">
       <input class="search hm-q" id="hm-q" type="search" placeholder="ค้นหาชื่อโฟลเดอร์ หรือชื่อแพ็ก" value="${esc(HV.q)}" autocomplete="off">
@@ -2320,6 +2375,7 @@ H.addEventListener("click", e => {
   if (e.target.closest("input,select")) return;
   if (!b) { if (HV.menu) { HV.menu = null; renderHome(); return; } const c = e.target.closest("[data-hopen]"); if (c) openFolder(c.dataset.hopen, "build"); return; }
   if (b.id === "hm-new" || b.id === "hm-new2") return createFolder();
+  if (b.id === "hm-newshop") return newShop();
   if (b.id === "hm-import") return $("#file-open").click();
   if (b.id === "hm-clear") { HV.q = ""; HV.period = "all"; renderHome(); return; }
   if (b.dataset.hperiod) { HV.period = b.dataset.hperiod; renderHome(); return; }
@@ -3026,15 +3082,19 @@ $("#settings-modal").addEventListener("click", e => { if (e.target.id === "setti
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#settings-modal").hidden) $("#settings-modal").hidden = true; });
 function showView(v){
   if (v !== "home" && v !== "items" && !curFolder()) v = "home";
+  if (isShop(curFolder()) && ["build","board","present"].includes(v)) v = "shop";      // an exchange shop has one page for everything
   if (!$("#view-board").hidden && v !== "board") BV.edit = BV.add = BV.menu = null;
   ["home","build","board","present","items"].forEach(k => { $("#view-" + k).hidden = v !== k; $("#tab-" + k).setAttribute("aria-selected", v === k); });
-  ["build","board","present"].forEach(k => $("#tab-" + k).disabled = !curFolder());
+  $("#view-shop").hidden = v !== "shop"; if (v === "shop") $("#tab-build").setAttribute("aria-selected", true);
+  ["build","board","present"].forEach(k => $("#tab-" + k).disabled = !curFolder() || (isShop(curFolder()) && k !== "build"));
+  $("#tab-build").textContent = isShop(curFolder()) ? "จัดร้าน" : "จัดแพ็ก";
   const f = curFolder(), cr = $("#crumb"); cr.hidden = !f || v === "home" || v === "items"; if (f) cr.textContent = "📁 " + f.name;
   if (v === "home") { HV.menu = null; renderHome(); }
   if (v === "build") { renderLib(); renderEditor(); renderRight(); }
   if (v === "board") { BV.base = JSON.parse(JSON.stringify(S.packs)); BV.history = []; renderBoard(); }
   if (v === "present") renderPresent();
   if (v === "items") renderItems();
+  if (v === "shop") renderShop();
 }
 function openFolder(id, view = "build", packId){
   save(false);
@@ -3136,7 +3196,8 @@ function xlProduct(p){
     n(p.pos), xlDT(p.start, p.startTime), xlDT(p.end, p.endTime),
     n(p.limit) > 0 ? n(p.limit) : "", "", "", "",
     rs.on ? Math.max(1, Math.floor(n(rs.every)) || 1) : "", "", rs.on ? xlDT(rs.firstDate, rs.firstTime) : "",
-    "TRUE", "TRUE", "FALSE", payCur(p), sp, sp, "", "", "", "", "", "",
+    "TRUE", "TRUE", "FALSE", payCur(p), sp, sp,
+    ...(String(p.currency2 || "").trim() && n(p.curPrice2) > 0 ? [p.currency2.trim(), n(p.curPrice2), n(p.curPrice2)] : ["", "", ""]), "", "", "",
     ...(p.mode === "random" && !p.items.some(x => x.fixed) && p.bonus === false ? [name + " - Random", ""] : [name, p.mode === "random" ? name + " - Random" : ""])];
   return { p, row, errors:[...new Set(errors)] };
 }
@@ -3168,7 +3229,7 @@ function renderExport(){
   const pRows = wantP ? chosen.map(r => r.pr.row) : [];
   const nb = chosen.reduce((a,r) => a + r.b.bundles.length, 0);
   const names = chosen.flatMap(r => r.b.bundles.map(b => b.name)), dup = [...new Set(names.filter((v,i) => names.indexOf(v) !== i))];
-  const PV_COLS = [1,3,4,11,12,13,14,18,20,24,25,33,34];                 // product preview: the columns that change per pack
+  const PV_COLS = [1,3,4,11,12,13,14,18,20,24,25,27,28,33,34];                 // product preview: the columns that change per pack
   ov.innerHTML = `<div class="settings xl" role="dialog" aria-labelledby="xl-t">
     <h3 id="xl-t">Export สำหรับ Aztek (.xlsx)</h3>
     <div class="xl-top">
@@ -3474,7 +3535,7 @@ function applyRows(rows, initial, last, snapshot, force){
       if (r.deleted) { if (i >= 0) { seen.push({ by:r.by, what:`ลบโฟลเดอร์ “${S.folders[i].name}”` }); S.folders.splice(i, 1); } }
       else { const d = JSON.parse(r.json); let f = S.folders[i];
         if (!f) { f = newFolder({ id:r.id, packs:[] }); S.folders.push(f); }
-        Object.assign(f, { name:d.name, color:d.color, created:d.created, updated:r.updated, _order:d.order || [] }); touched.add(f); }
+        Object.assign(f, { name:d.name, color:d.color, created:d.created, updated:r.updated, _order:d.order || [] }); if (d.kind) { f.kind = d.kind; f.shop = d.shop || {}; } else { delete f.kind; delete f.shop; } touched.add(f); }
     }
     if (r.kind === "pack") {
       let at = null; S.folders.forEach(f => { const i = f.packs.findIndex(p => p.id === r.id); if (i >= 0) at = { f, i }; });
@@ -3528,7 +3589,7 @@ function refresh(){
   const fk = focusKey();
   const had = S.folderId; normalize();
   lsSet(LS_STATE, JSON.stringify({ ...S, packs:undefined }));
-  const view = ["home","build","board","present","items"].find(v => !$("#view-" + v).hidden) || "home";
+  const view = ["home","build","board","present","items","shop"].find(v => !$("#view-" + v).hidden) || "home";
   if (had && !S.folderId) { toast("โฟลเดอร์นี้ถูกลบโดยผู้ใช้อื่น"); showView("home"); return; }
   const cf = curFolder(), cr = $("#crumb"); if (cf) cr.textContent = "📁 " + cf.name;
   if (view === "home") renderHome();
@@ -3536,6 +3597,7 @@ function refresh(){
   if (view === "board") renderBoard();
   if (view === "present") renderPresent();
   if (view === "items") renderItems();
+  if (view === "shop") renderShop();
   restoreFocus(fk);
 }
 
@@ -3554,7 +3616,7 @@ function makeCloud(){
   function snapshot(){
     const m = new Map();
     S.folders.forEach(f => {
-      m.set("folder:" + f.id, { kind:"folder", id:f.id, fid:"", json: clean({ name:f.name, color:f.color || "", created:f.created || 0, order:f.packs.map(p => p.id) }) });
+      m.set("folder:" + f.id, { kind:"folder", id:f.id, fid:"", json: clean({ name:f.name, color:f.color || "", created:f.created || 0, order:f.packs.map(p => p.id), ...folderMeta(f) }) });
       f.packs.forEach(p => m.set("pack:" + p.id, { kind:"pack", id:p.id, fid:f.id, json: clean(p) }));
     });
     m.set("shared:main", { kind:"shared", id:"main", fid:"", json: clean({ customCats:S.customCats, azMap:S.azMap, memo:S.memo, settings:{ rate:S.settings.rate, seed:S.settings.seed } }) });
@@ -3613,6 +3675,192 @@ function makeCloud(){
   return { call, start, schedule, me, setMe: v => { lsSet(LS_ME, String(v || "").trim().slice(0, 40)); badge(); }, flush: push };
 }
 
+/* ---------- exchange shop (ร้านแลกไอเทม) ----------
+   A folder of kind "shop": every row is one Product that sells one item, bought with 1–2 event currencies
+   (both paid together). Shop-wide settings live on the folder and are copied into every product, so the
+   item summary, Export and the database keep treating products as ordinary one-item packs. */
+const SHOP_DEF = { cur1:"", cur2:"", azCat:"", start:"", startTime:"00:01", end:"", endTime:"23:59", prefix:"", sort:"price" };
+const isShop = f => f?.kind === "shop";
+const sortKeys = o => Array.isArray(o) ? o.map(sortKeys) : o && typeof o === "object" ? Object.keys(o).sort().reduce((a, k) => (a[k] = sortKeys(o[k]), a), {}) : o;
+const folderMeta = f => f?.kind ? { kind:f.kind, shop:sortKeys({ ...SHOP_DEF, ...(f.shop || {}) }) } : {};
+const shopOf = f => (f.shop = { ...SHOP_DEF, ...(f.shop || {}) });
+const SHV = { paste:null, q:"", azCustom:false };
+const itemOfRow = p => p.items[0] || null;
+function shopName(sh, x){
+  const base = String(x?.name || "").trim() || "(ไม่มีชื่อ)";
+  return `${sh.prefix ? sh.prefix.trim() + " " : ""}${base}${n(x?.amt) > 1 ? ` x${fmt(n(x.amt), 0)}` : ""}`;
+}
+/* copy shop settings into each product, name it and order it */
+function syncShop(f){
+  if (!isShop(f)) return;
+  const sh = shopOf(f);
+  f.packs.forEach(p => {
+    Object.assign(p, { mode:"fixed", bonus:false, currency: sh.cur1.trim() || "Point", currency2: sh.cur2.trim(), azCat: sh.azCat,
+      start: sh.start, startTime: sh.startTime, end: sh.end, endTime: sh.endTime, types: p.types || [], reset: blankReset() });
+    const x = itemOfRow(p); if (x) { const m = BYID.get(x.itemId); if (m) x.name = m.name; }
+    p.name = shopName(sh, x);
+  });
+  const order = sh.sort === "price" ? f.packs.slice().sort((a, b) => (n(b.curPrice) - n(a.curPrice)) || (f.packs.indexOf(a) - f.packs.indexOf(b))) : f.packs;
+  order.forEach((p, i) => { p.pos = order.length - i; });
+}
+const shopRows = f => f.packs.slice().sort((a, b) => n(b.pos) - n(a.pos));
+function newShop(){
+  const n0 = S.folders.filter(isShop).length + 1;
+  const f = newFolder({ name:`ร้านแลกไอเทม ${n0}`, kind:"shop", shop:{ ...SHOP_DEF } });
+  S.folders.push(f); openFolder(f.id, "build"); toast("สร้างร้านแลกไอเทมแล้ว · ตั้งชื่อสกุลเงิน แล้ววางรายการจาก Sheet ได้เลย");
+}
+function shopProduct(x){
+  return { id:uid(), name:"", mode:"fixed", category:"แพ็ก & จุ่ม", types:[], image:x.image || "", start:"", startTime:"00:01", end:"", endTime:"23:59",
+    reset:blankReset(), limit:x.limit ?? 1, price:"", pos:0, bonus:false, idea:"", curPrice:x.cost ?? "", curPrice2:x.cost2 ?? "",
+    items:[{ uid:uid(), itemId:x.id || "", name:x.name || "", amt:x.amt ?? 1, tp:x.tp ?? (S.memo[x.id]?.tp ?? ""), tpGame:"", chance:"", fixed:false, ...(x.id ? {} : { custom:true }) }] };
+}
+/* paste from Sheet: header row decides the columns; Item ID, Amt, Point Req and Limit are enough */
+function parseShopPaste(text){
+  const rows = text.replace(/\r/g, "").split("\n").map(l => l.split("\t")).filter(r => r.some(c => c.trim()));
+  if (!rows.length) return { err:"ยังไม่มีข้อมูล" };
+  const H = rows[0].map(c => c.trim().toLowerCase());
+  const find = (re, not) => H.findIndex(h => re.test(h) && !(not && not.test(h)));
+  const col = { id:find(/item\s*id|^id$|ไอดี/), name:find(/item\s*name|^name$|ชื่อ/), amt:find(/^amt|amount|qty|จำนวน/),
+    cost2:find(/(point\s*req|ราคา|cost|price|แต้ม)\s*2/), cost:find(/point\s*req|^ราคา|^cost|^price|แต้มที่ใช้/, /2|total|รวม/),
+    limit:find(/limit|จำกัด/), img:find(/image\s*url|^cdn/), tp:find(/^tp\s*\/\s*(ea|ชิ้น)|^tp$/) };
+  if (col.id < 0) return { err:"ไม่พบหัวคอลัมน์ Item ID · คัดลอกแถวหัวตารางมาด้วย" };
+  if (col.cost < 0) return { err:"ไม่พบหัวคอลัมน์ราคา (เช่น Point Req)" };
+  const num = v => { const s = String(v ?? "").replace(/,/g, "").trim(); return s === "" ? "" : isFinite(+s) ? +s : ""; };
+  const cell = (r, k) => col[k] >= 0 ? String(r[col[k]] ?? "").trim() : "";
+  const list = [], skipped = [];
+  rows.slice(1).forEach((r, i) => {
+    const id = cell(r, "id"), name = cell(r, "name");
+    if (!id && !name) return;
+    if (/^(total|รวม)/i.test(id) || /^(total|รวม)/i.test(name)) return;
+    const x = { id, name, amt: num(cell(r, "amt")) || 1, cost: num(cell(r, "cost")), cost2: col.cost2 >= 0 ? num(cell(r, "cost2")) : "",
+      limit: num(cell(r, "limit")) === "" ? 1 : num(cell(r, "limit")), image: cell(r, "img"), tp: col.tp >= 0 ? num(cell(r, "tp")) : undefined };
+    if (x.cost === "") skipped.push(`แถว ${i + 2} (${name || id}) ไม่มีราคา`);
+    list.push(x);
+  });
+  return { list, skipped, cols: Object.entries(col).filter(([, v]) => v >= 0).map(([k]) => k) };
+}
+function shopTotals(f){
+  const vis = shown(f.packs), rate = n(S.settings.rate) || 2;
+  const t1 = vis.reduce((a, p) => a + n(p.curPrice) * Math.max(0, n(p.limit)), 0), t2 = vis.reduce((a, p) => a + n(p.curPrice2) * Math.max(0, n(p.limit)), 0);
+  const thb = vis.reduce((a, p) => { const x = itemOfRow(p); return a + (x ? n(x.tp) * n(x.amt) * rate * Math.max(0, n(p.limit)) : 0); }, 0);
+  const trade = vis.filter(p => BYID.get(itemOfRow(p)?.itemId)?.trade === "TRUE");
+  const noCost = vis.filter(p => !(n(p.curPrice) > 0));
+  return { vis, t1, t2, thb, trade, noCost };
+}
+const costHTML = (f, p) => { const sh = shopOf(f);
+  return `<span class="c1">${fmt(n(p.curPrice), 0)}<small>${esc(sh.cur1 || "Point")}</small></span>${sh.cur2 && n(p.curPrice2) > 0 ? `<span class="c2">+ ${fmt(n(p.curPrice2), 0)}<small>${esc(sh.cur2)}</small></span>` : ""}`; };
+function renderShop(){
+  const el = $("#view-shop"), f = curFolder(); if (!el || el.hidden || !isShop(f)) return;
+  const fk = typeof focusKey === "function" ? focusKey() : null;
+  syncShop(f);
+  const sh = shopOf(f), T = shopTotals(f), rate = n(S.settings.rate) || 2, rows = shopRows(f);
+  const fld = (id, label, html, hint = "") => `<div class="fld"><label for="${id}">${label}</label>${html}${hint ? `<span class="hint">${hint}</span>` : ""}</div>`;
+  const inp = (k, ph = "", type = "text") => `<input id="shs-${k}" data-shs="${k}" type="${type}" value="${esc(sh[k])}" placeholder="${esc(ph)}">`;
+  /* a category typed by hand stays in the text box (even once it shows up in the list) until another one is picked */
+  const azCustom = SHV.azCustom || (sh.azCat && !azList().includes(sh.azCat));
+  const azOpts = `<option value="">— เลือกหมวดหมู่ —</option>` + azList().map(a => `<option value="${esc(a)}"${!azCustom && sh.azCat === a ? " selected" : ""}>${esc(a)}</option>`).join("")
+    + `<option value="__custom"${azCustom ? " selected" : ""}>กรอกเอง…</option>`;
+  const row = (p, i) => { const x = itemOfRow(p) || {}, m = BYID.get(x.itemId), val = n(x.tp) * n(x.amt) * rate;
+    const need = n(p.curPrice) * Math.max(0, n(p.limit));
+    return `<tr data-srow="${p.id}" class="${p.hidden ? "hid" : ""}">
+      <td class="no">${i + 1}</td>
+      <td class="it"><div class="itc">${icon(m?.img || p.image, m?.grade, x.name, "ico sm")}${!m ? `<span class="idin"><input class="cell w" data-sf="${p.id}|itemId" value="${esc(x.itemId)}" placeholder="Item ID" aria-label="Item ID"><input class="cell w" data-sf="${p.id}|iname" value="${esc(x.name)}" placeholder="ชื่อไอเทม" aria-label="ชื่อไอเทม"></span>` : ""}<span><b>${esc(x.name || "(ไม่มีชื่อ)")}</b><small>${esc(x.itemId || "ไม่มี Item ID")}${m?.trade === "TRUE" ? ` · <span class="warnt">ซื้อขายได้</span>` : ""}${!m && x.itemId && ITEMS.length ? ` · <span class="warnt">ไม่พบใน Sheet</span>` : ""}${p.hidden ? ` · <span class="hid-tag">${EYE_OFF}ซ่อนอยู่</span>` : ""}</small></span></div></td>
+      <td class="r"><input class="cell" type="number" min="1" step="1" data-sf="${p.id}|amt" value="${esc(x.amt)}" aria-label="จำนวน"></td>
+      <td class="r"><input class="cell${n(p.curPrice) > 0 ? "" : " miss"}" type="number" min="0" step="1" data-sf="${p.id}|curPrice" value="${esc(p.curPrice)}" aria-label="ราคา ${esc(sh.cur1 || "Point")}"></td>
+      ${sh.cur2 ? `<td class="r"><input class="cell" type="number" min="0" step="1" data-sf="${p.id}|curPrice2" value="${esc(p.curPrice2 ?? "")}" aria-label="ราคา ${esc(sh.cur2)}"></td>` : ""}
+      <td class="r"><input class="cell" type="number" min="0" step="1" data-sf="${p.id}|limit" value="${esc(p.limit)}" aria-label="Limit"></td>
+      <td class="r num">${fmt(need, 0)}</td>
+      <td class="r num">${val ? "฿" + fmt(val, 0) : `<input class="cell tp miss" type="number" min="0" step="any" data-sf="${p.id}|tp" value="" placeholder="TP" aria-label="TP ต่อชิ้น">`}</td>
+      <td><div class="acts"><button class="linkbtn" data-sact="hide|${p.id}">${p.hidden ? "เลิกซ่อน" : "ซ่อน"}</button><button class="x" data-sact="del|${p.id}" aria-label="ลบ">×</button></div></td></tr>`; };
+  const card = p => { const x = itemOfRow(p) || {}, m = BYID.get(x.itemId), lim = n(p.limit);
+    return `<div class="sp-card${p.hidden ? " hid" : ""}">
+      ${m?.grade ? `<span class="sp-gr" style="--gc:${gradeColor(m.grade)}">${esc(m.grade.replace(/\s*\(.*\)/, ""))}</span>` : ""}
+      <span class="sp-img" style="--gc:${gradeColor(m?.grade)}">${m?.img || p.image ? `<img src="${esc(m?.img || p.image)}" alt="" loading="lazy" onerror="this.remove()">` : `<b>${esc((x.name || "?").slice(0, 2))}</b>`}</span>
+      <span class="sp-lim">${lim > 0 ? `จำกัด ${fmt(lim, 0)}/${fmt(lim, 0)} ชิ้น` : "ไม่จำกัด"}${n(x.amt) > 1 ? ` · ได้ ${fmt(n(x.amt), 0)} ชิ้น` : ""}</span>
+      <span class="sp-nm" title="${esc(x.name)}">${esc(x.name || "(ไม่มีชื่อ)")}</span>
+      <span class="sp-buy"><span class="sp-btn">แลก</span><span class="sp-cost">${costHTML(f, p)}</span></span></div>`; };
+  el.innerHTML = `<div class="shp">
+    <header class="shp-h">
+      <div><h1>${esc(f.name)}</h1><p>ร้านแลกไอเทม · ${T.vis.length} สินค้า${f.packs.length > T.vis.length ? ` (ซ่อน ${f.packs.length - T.vis.length})` : ""} · 1 สินค้า = 1 Bundle + 1 Product ใน Aztek</p></div>
+      <div class="shp-acts"><button class="btn" id="shp-rename">เปลี่ยนชื่อร้าน</button><button class="btn pri" id="shp-export" ${T.vis.length ? "" : "disabled"}>Export สำหรับ Aztek</button></div>
+    </header>
+    <section class="shp-card shp-set" aria-labelledby="shs-h"><h2 id="shs-h">ตั้งค่าร้าน <small>ใช้กับทุกสินค้า</small></h2>
+      <div class="shp-grid">
+        ${fld("shs-cur1", `สกุลเงินหลัก <span class="req">*</span>`, inp("cur1", "เช่น Battery"), "ชื่อต้องตรงกับใน Aztek")}
+        ${fld("shs-cur2", `สกุลเงินที่ 2 <span class="opt-l">ไม่บังคับ</span>`, inp("cur2", "เช่น Ticket"), "ใส่เมื่อบางสินค้าต้องจ่ายทั้ง 2 อย่าง")}
+        ${fld("shs-azCat", `หมวดหมู่ใน Aztek <span class="req">*</span>`, `<select id="shs-azCat" data-shaz>${azOpts}</select>${azCustom ? `<input id="shs-azc" data-shs="azCat" value="${esc(sh.azCat)}" placeholder="เช่น Rank Shop - 🔋 Battery Shop" aria-label="หมวดหมู่ใน Aztek (กรอกเอง)">` : ""}`, azCustom ? "ต้องตรงกับใน Aztek ทุกตัวอักษร รวมไอคอน" : "")}
+        ${fld("shs-prefix", `ชื่อนำหน้าสินค้า <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น [Battery Shop]"), "กันชื่อ Bundle ซ้ำกับร้านอื่น")}
+        <div class="fld when"><label for="shs-start">เปิดร้าน <span class="req">*</span></label><div class="dt">${inp("start", "", "date")}${inp("startTime", "", "time")}</div></div>
+        <div class="fld when"><label for="shs-end">ปิดร้าน <span class="req">*</span></label><div class="dt">${inp("end", "", "date")}${inp("endTime", "", "time")}</div></div>
+        ${fld("shs-sort", "ลำดับแสดง", `<select id="shs-sort" data-shs="sort"><option value="price"${sh.sort === "price" ? " selected" : ""}>ราคาสูงไปต่ำ</option><option value="row"${sh.sort === "row" ? " selected" : ""}>ตามลำดับในตาราง</option></select>`)}
+      </div></section>
+    <section class="shp-sum" aria-live="polite">
+      <p class="say">ถ้า 1 ID แลกครบทุกสินค้า ต้องใช้</p>
+      <p class="big">${fmt(T.t1, 0)} <span>${esc(sh.cur1 || "Point")}</span>${sh.cur2 && T.t2 ? ` <i>+</i> ${fmt(T.t2, 0)} <span>${esc(sh.cur2)}</span>` : ""}</p>
+      <p class="sub">ได้ของมูลค่ารวม ฿${fmt(T.thb, 0)}${T.noCost.length ? ` · <b>${T.noCost.length} สินค้ายังไม่มีราคา</b>` : ""}${T.trade.length ? ` · <b>${T.trade.length} ไอเทมซื้อขายในตลาดได้</b>` : ""}</p>
+    </section>
+    <section class="shp-card" aria-labelledby="shl-h">
+      <div class="shp-bar"><h2 id="shl-h">สินค้า <small>${f.packs.length} รายการ</small></h2>
+        <span style="flex:1"></span><button class="btn" id="shp-add">+ เพิ่มแถว</button><button class="btn pri" id="shp-paste">วางจาก Sheet</button></div>
+      ${f.packs.length ? `<div class="tblwrap"><table class="shp-t">
+        <thead><tr><th>#</th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">${esc(sh.cur1 || "Point")}</th>${sh.cur2 ? `<th class="r">${esc(sh.cur2)}</th>` : ""}<th class="r">Limit</th><th class="r">ใช้รวม (ครบ Limit)</th><th class="r">มูลค่า / ครั้ง</th><th></th></tr></thead>
+        <tbody>${rows.map(row).join("")}</tbody></table></div>`
+      : `<div class="shp-empty"><b>ยังไม่มีสินค้า</b><p>คัดลอกตารางจาก Google Sheet ทั้งแถวหัวตาราง แล้วกด <b>วางจาก Sheet</b><br>ต้องมีอย่างน้อยคอลัมน์ Item ID, Amt, Point Req และ Limit</p></div>`}
+    </section>
+    <section class="shp-card shp-prev" aria-labelledby="shp-ph"><h2 id="shp-ph">ตัวอย่างหน้าร้าน <small>ผู้เล่นเห็นแบบนี้ (ยังไม่ซ่อนสินค้าที่ซ่อนอยู่)</small></h2>
+      <div class="sp-panel"><div class="sp-title">${esc(f.name)}</div>${sh.start || sh.end ? `<div class="sp-when">${esc(dtLabel(sh.start, sh.startTime) || "–")} – ${esc(dtLabel(sh.end, sh.endTime) || "–")}</div>` : ""}
+        <div class="sp-grid">${shown(rows).map(card).join("") || `<p class="sp-none">ยังไม่มีสินค้า</p>`}</div></div>
+    </section>
+    ${SHV.paste != null ? `<div class="modal" id="shp-pm"><div class="settings wide" role="dialog" aria-labelledby="shp-pt">
+      <h3 id="shp-pt">วางรายการจาก Sheet</h3>
+      <p>คัดลอกตารางจาก Google Sheet รวมแถวหัวตาราง แล้ววางที่นี่ · ระบบอ่านคอลัมน์ Item ID, Item Name, Amt, Point Req, Point Req 2, Limit, TP / ea, Image URL (คอลัมน์อื่นข้ามได้)</p>
+      <textarea id="shp-ptext" rows="9" placeholder="Point Req	IMG	Item ID	Item Name	Amt	Limit / Season ...">${esc(SHV.paste)}</textarea>
+      ${(() => { if (!SHV.paste.trim()) return ""; const r = parseShopPaste(SHV.paste);
+        return r.err ? `<p class="sb-err">${esc(r.err)}</p>` : `<p class="shp-pok">อ่านได้ <b>${r.list.length}</b> สินค้า · ใช้คอลัมน์: ${r.cols.join(", ")}${r.skipped.length ? `<br><span class="warnt">${r.skipped.map(esc).join(" · ")}</span>` : ""}</p>`; })()}
+      <div class="sb-acts"><span style="flex:1"></span><button class="btn" id="shp-pcancel">ยกเลิก</button>${f.packs.length ? `<button class="btn" id="shp-preplace">แทนที่ทั้งหมด</button>` : ""}<button class="btn pri" id="shp-padd">${f.packs.length ? "เพิ่มต่อท้าย" : "เพิ่มสินค้า"}</button></div>
+    </div></div>` : ""}
+  </div>`;
+  if (typeof restoreFocus === "function") restoreFocus(fk);
+  if (SHV.paste != null && !fk) $("#shp-ptext")?.focus();
+}
+const shopSave = () => { const f = curFolder(); syncShop(f); save(); };
+(() => {
+  const V = $("#view-shop");
+  V.addEventListener("input", e => { const t = e.target, f = curFolder(); if (!isShop(f)) return;
+    if (t.id === "shp-ptext") { SHV.paste = t.value; clearTimeout(V._pt); V._pt = setTimeout(renderShop, 250); return; }
+    if (t.dataset.shs) { shopOf(f)[t.dataset.shs] = t.value; shopSave(); clearTimeout(V._t); V._t = setTimeout(renderShop, 400); return; }
+    if (t.dataset.sf) { const [pid, k] = t.dataset.sf.split("|"), p = f.packs.find(x => x.id === pid); if (!p) return;
+      const x = itemOfRow(p);
+      if (k === "itemId" && x) { x.itemId = t.value.trim(); const it = BYID.get(x.itemId); if (it) { x.name = it.name; delete x.custom; if (x.tp === "" && S.memo[it.id]?.tp) x.tp = S.memo[it.id].tp; } else if (x.itemId) delete x.custom; }
+      else if (k === "iname" && x) { x.name = t.value; }
+      else if (k === "amt" || k === "tp") { if (x) { x[k] = t.value; if (k === "tp" && x.itemId) S.memo[x.itemId] = { ...(S.memo[x.itemId] || {}), tp:t.value }; } } else p[k] = t.value;
+      shopSave(); clearTimeout(V._t); V._t = setTimeout(renderShop, 500); } });
+  /* dropdowns only: text and date boxes already saved on "input"; redrawing on their blur would eat the next click */
+  V.addEventListener("change", e => { const t = e.target, f = curFolder(); if (!isShop(f) || t.tagName !== "SELECT") return;
+    if (t.dataset.shaz != null) { const sh = shopOf(f);
+      if (t.value === "__custom") { SHV.azCustom = true; if (azList().includes(sh.azCat)) sh.azCat = ""; } else { SHV.azCustom = false; sh.azCat = t.value; }
+      shopSave(); setTimeout(() => { renderShop(); if (SHV.azCustom) $("#shs-azc")?.focus(); }, 0); return; }
+    if (t.dataset.shs) { shopOf(f)[t.dataset.shs] = t.value; shopSave(); setTimeout(renderShop, 0); } });
+  V.addEventListener("click", e => { const b = e.target.closest("button"), f = curFolder(); if (!isShop(f)) return;
+    if (e.target.id === "shp-pm") { SHV.paste = null; renderShop(); return; }
+    if (!b) return;
+    if (b.id === "shp-paste") { SHV.paste = ""; renderShop(); return; }
+    if (b.id === "shp-pcancel") { SHV.paste = null; renderShop(); return; }
+    if (b.id === "shp-padd" || b.id === "shp-preplace") { const r = parseShopPaste(SHV.paste || "");
+      if (r.err || !r.list.length) { toast(r.err || "ยังไม่มีข้อมูล"); return; }
+      if (b.id === "shp-preplace") f.packs.length = 0;
+      r.list.forEach(x => f.packs.push(shopProduct(x))); SHV.paste = null; shopSave(); renderShop(); toast(`เพิ่ม ${r.list.length} สินค้าแล้ว`); return; }
+    if (b.id === "shp-add") { const p = shopProduct({ id:"", name:"", amt:1, cost:"", limit:1 }); p.items[0].custom = false; f.packs.push(p); shopSave(); renderShop();
+      document.querySelector(`[data-sf="${p.id}|itemId"]`)?.focus(); return; }
+    if (b.id === "shp-export") { save(); return openExport(f.id, "both"); }
+    if (b.id === "shp-rename") { openSettings(); return; }
+    if (b.dataset.sact) { const [a, pid] = b.dataset.sact.split("|"), p = f.packs.find(x => x.id === pid); if (!p) return;
+      if (a === "hide") { p.hidden = !p.hidden; if (!p.hidden) delete p.hidden; }
+      if (a === "del") { if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "ลบ?"; b.classList.add("armed"); return; } f.packs.splice(f.packs.indexOf(p), 1); }
+      shopSave(); renderShop(); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && SHV.paste != null && !$("#view-shop").hidden) { SHV.paste = null; renderShop(); } });
+})();
+
 /* ---------- database mode (Supabase, page served by Vercel) ----------
    Folders, packs (with their items), each item's remembered TP and the shared settings are rows in the database.
    Local edits are diffed and written right away (debounced); everyone's changes arrive by realtime.
@@ -3669,7 +3917,7 @@ function makeSupa(cfg){
   function snapshot(){
     const m = new Map();
     S.folders.forEach(f => {
-      m.set("folder:" + f.id, { kind:"folder", id:f.id, fid:"", json: clean({ name:f.name, color:f.color || "", created:f.created || 0, order:f.packs.map(p => p.id) }) });
+      m.set("folder:" + f.id, { kind:"folder", id:f.id, fid:"", json: clean({ name:f.name, color:f.color || "", created:f.created || 0, order:f.packs.map(p => p.id), ...folderMeta(f) }) });
       f.packs.forEach(p => m.set("pack:" + p.id, { kind:"pack", id:p.id, fid:f.id, json: clean(canonPack(p)) }));
     });
     m.set("shared:main", { kind:"shared", id:"main", fid:"", json: clean({ customCats:S.customCats || [], azMap:sortObj(S.azMap || {}), settings:{ rate:num(S.settings.rate), seed:num(S.settings.seed) } }) });
@@ -3678,7 +3926,7 @@ function makeSupa(cfg){
   }
   const by = r => NAMES.get(r.updated_by) || "";
   const folderRow = f => ({ kind:"folder", id:f.id, fid:"", by:by(f), updated:Date.parse(f.updated_at) || 0,
-    json: clean({ name:f.name, color:f.color || "", created:Date.parse(f.created_at) || 0, order:f.pack_order || [] }) });
+    json: clean({ name:f.name, color:f.color || "", created:Date.parse(f.created_at) || 0, order:f.pack_order || [], ...folderMeta(f.extra || {}) }) });
   const packRow = (r, items) => ({ kind:"pack", id:r.id, fid:r.folder_id, by:by(r), updated:Date.parse(r.updated_at) || 0, json: clean(dbToPack(r, items)) });
   const sharedRow = a => ({ kind:"shared", id:"main", fid:"", by:by(a), json: clean({ customCats:a.custom_cats || [], azMap:sortObj(a.az_map || {}), settings:{ rate:num(a.tp_rate), seed:num(a.seed_per_thb) } }) });
   const memoRow = v => ({ kind:"memo", id:v.item_id, fid:"", by:by(v), json: clean(canonMemo({ tp:v.tp, tpGame:v.tp_game })) });
@@ -3732,7 +3980,7 @@ function makeSupa(cfg){
       const fr = ch.filter(r => r.kind === "folder");
       if (fr.length) {
         await P(sb.from("folders").upsert(fr.map(r => { const d = JSON.parse(r.json);
-          return { id:r.id, name:d.name, color:d.color || "", pack_order:d.order || [], created_at:new Date(d.created || Date.now()).toISOString() }; })));
+          return { id:r.id, name:d.name, color:d.color || "", pack_order:d.order || [], created_at:new Date(d.created || Date.now()).toISOString(), extra: d.kind ? { kind:d.kind, shop:d.shop } : {} }; })));
         fr.forEach(r => done("folder:" + r.id, r.json)); }
       for (const r of ch.filter(r => r.kind === "pack")) {
         if (lockedBy(r.id)) { discard(r.id); continue; }          // someone else holds it: their version stays, ours is dropped

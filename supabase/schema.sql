@@ -36,6 +36,7 @@ create table if not exists public.folders (
   name        text not null default 'โปรโมชันใหม่',
   color       text not null default '',
   pack_order  text[] not null default '{}',
+  extra       jsonb not null default '{}',               -- folder kind (exchange shop) and its settings
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   updated_by  uuid references auth.users(id) on delete set null
@@ -67,6 +68,8 @@ create table if not exists public.packs (
   updated_at        timestamptz not null default now(),
   updated_by        uuid references auth.users(id) on delete set null
 );
+alter table public.folders add column if not exists extra jsonb not null default '{}';   -- for projects made before the exchange shop
+
 create index if not exists packs_folder_idx on public.packs(folder_id);
 
 create table if not exists public.pack_items (
