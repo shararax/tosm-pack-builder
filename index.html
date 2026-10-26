@@ -3149,6 +3149,7 @@ function xlPack(p){
     bundles.push({ name:rn, type:"RANDOM", rows:rr });
   }
   bundles.forEach(b => b.rows.forEach((r, i) => r[6] = i + 1));           // Position = order inside the bundle
+  if (isShop(S.folders.find(f => f.packs.includes(p)))) bundles.forEach(b => b.rows.forEach(r => r[6] = n(p.pos)));   // shop: the product's place in the shop (top = highest)
   if (!sure.length && !rnd) (p.bonus !== false ? warns : errors).push(p.bonus !== false ? "แพ็กนี้ไม่มีไอเทม จะมีแค่ GSP + EXP" : "Bundle ว่าง: ไม่มีไอเทม และตั้งไว้ว่าไม่ได้ GSP / EXP");
   return { p, bundles, errors:[...new Set(errors)], warns:[...new Set(warns)] };
 }
@@ -3214,6 +3215,8 @@ function xlCheck(p){
 
 /* export modal */
 const XV = { fid:null, sel:new Set(), preview:false, mode:"both" };
+/* packs in the order they go into the files: a shop goes top to bottom (highest position first) */
+const xlPacks = f => isShop(f) ? f.packs.slice().sort((a, b) => n(b.pos) - n(a.pos)) : f.packs;
 function openExport(fid, mode){
   XV.fid = fid; if (mode) XV.mode = mode; const f = S.folders.find(x => x.id === fid); if (!f) return;
   XV.sel = new Set(f.packs.filter(p => !p.hidden && !xlCheck(p).errors.length).map(p => p.id)); XV.preview = false;
@@ -3223,7 +3226,7 @@ function renderExport(){
   let ov = $("#xl-ov");
   if (!ov) { ov = document.createElement("div"); ov.id = "xl-ov"; ov.className = "modal"; document.body.append(ov); }
   const f = S.folders.find(x => x.id === XV.fid); if (!f) { ov.remove(); return; }
-  const res = f.packs.map(xlCheck), chosen = res.filter(r => XV.sel.has(r.p.id) && !r.errors.length);
+  const res = xlPacks(f).map(xlCheck), chosen = res.filter(r => XV.sel.has(r.p.id) && !r.errors.length);
   const wantB = XV.mode !== "product", wantP = XV.mode !== "bundle";
   const bRows = wantB ? chosen.flatMap(r => r.b.bundles.flatMap(b => b.rows)) : [];
   const pRows = wantP ? chosen.map(r => r.pr.row) : [];
@@ -3275,7 +3278,7 @@ function xlDownload(X, sheet, head, rows, cols, filename){
 }
 async function doExport(){
   const f = S.folders.find(x => x.id === XV.fid); if (!f) return;
-  const chosen = f.packs.map(xlCheck).filter(r => XV.sel.has(r.p.id) && !r.errors.length); if (!chosen.length) return;
+  const chosen = xlPacks(f).map(xlCheck).filter(r => XV.sel.has(r.p.id) && !r.errors.length); if (!chosen.length) return;
   let X; try { X = await loadXLSX(); } catch { toast("โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจการเชื่อมต่ออินเทอร์เน็ต"); return; }
   const out = [];
   if (XV.mode !== "product") { const rows = chosen.flatMap(r => r.b.bundles.flatMap(b => b.rows));
@@ -3700,10 +3703,13 @@ function syncShop(f){
     const x = itemOfRow(p); if (x) { const m = BYID.get(x.itemId); if (m) x.name = m.name; }
     p.name = shopName(sh, x);
   });
-  const order = sh.sort === "price" ? f.packs.slice().sort((a, b) => (n(b.curPrice) - n(a.curPrice)) || (f.packs.indexOf(a) - f.packs.indexOf(b))) : f.packs;
-  order.forEach((p, i) => { p.pos = order.length - i; });
+  /* position = count of shown products down to 1: the top one gets the highest number (24, 23, 22 …); hidden ones get 0 */
+  const vis = shopOrder(f).filter(p => !p.hidden);
+  f.packs.forEach(p => { if (p.hidden) p.pos = 0; });
+  vis.forEach((p, i) => { p.pos = vis.length - i; });
 }
-const shopRows = f => f.packs.slice().sort((a, b) => n(b.pos) - n(a.pos));
+const shopOrder = f => shopOf(f).sort === "price" ? f.packs.slice().sort((a, b) => (n(b.curPrice) - n(a.curPrice)) || (f.packs.indexOf(a) - f.packs.indexOf(b))) : f.packs.slice();
+const shopRows = shopOrder;
 function newShop(){
   const n0 = S.folders.filter(isShop).length + 1;
   const f = newFolder({ name:`ร้านแลกไอเทม ${n0}`, kind:"shop", shop:{ ...SHOP_DEF } });
@@ -3763,7 +3769,7 @@ function renderShop(){
   const row = (p, i) => { const x = itemOfRow(p) || {}, m = BYID.get(x.itemId), val = n(x.tp) * n(x.amt) * rate;
     const need = n(p.curPrice) * Math.max(0, n(p.limit));
     return `<tr data-srow="${p.id}" class="${p.hidden ? "hid" : ""}">
-      <td class="no">${i + 1}</td>
+      <td class="no" title="Position ใน Aztek">${p.hidden ? "–" : n(p.pos)}</td>
       <td class="it"><div class="itc">${icon(m?.img || p.image, m?.grade, x.name, "ico sm")}${!m ? `<span class="idin"><input class="cell w" data-sf="${p.id}|itemId" value="${esc(x.itemId)}" placeholder="Item ID" aria-label="Item ID"><input class="cell w" data-sf="${p.id}|iname" value="${esc(x.name)}" placeholder="ชื่อไอเทม" aria-label="ชื่อไอเทม"></span>` : ""}<span><b>${esc(x.name || "(ไม่มีชื่อ)")}</b><small>${esc(x.itemId || "ไม่มี Item ID")}${m?.trade === "TRUE" ? ` · <span class="warnt">ซื้อขายได้</span>` : ""}${!m && x.itemId && ITEMS.length ? ` · <span class="warnt">ไม่พบใน Sheet</span>` : ""}${p.hidden ? ` · <span class="hid-tag">${EYE_OFF}ซ่อนอยู่</span>` : ""}</small></span></div></td>
       <td class="r"><input class="cell" type="number" min="1" step="1" data-sf="${p.id}|amt" value="${esc(x.amt)}" aria-label="จำนวน"></td>
       <td class="r"><input class="cell${n(p.curPrice) > 0 ? "" : " miss"}" type="number" min="0" step="1" data-sf="${p.id}|curPrice" value="${esc(p.curPrice)}" aria-label="ราคา ${esc(sh.cur1 || "Point")}"></td>
@@ -3803,7 +3809,7 @@ function renderShop(){
       <div class="shp-bar"><h2 id="shl-h">สินค้า <small>${f.packs.length} รายการ</small></h2>
         <span style="flex:1"></span><button class="btn" id="shp-add">+ เพิ่มแถว</button><button class="btn pri" id="shp-paste">วางจาก Sheet</button></div>
       ${f.packs.length ? `<div class="tblwrap"><table class="shp-t">
-        <thead><tr><th>#</th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">${esc(sh.cur1 || "Point")}</th>${sh.cur2 ? `<th class="r">${esc(sh.cur2)}</th>` : ""}<th class="r">Limit</th><th class="r">ใช้รวม (ครบ Limit)</th><th class="r">มูลค่า / ครั้ง</th><th></th></tr></thead>
+        <thead><tr><th title="Position ใน Aztek · เลขมากอยู่บนสุด">ลำดับ</th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">${esc(sh.cur1 || "Point")}</th>${sh.cur2 ? `<th class="r">${esc(sh.cur2)}</th>` : ""}<th class="r">Limit</th><th class="r">ใช้รวม (ครบ Limit)</th><th class="r">มูลค่า / ครั้ง</th><th></th></tr></thead>
         <tbody>${rows.map(row).join("")}</tbody></table></div>`
       : `<div class="shp-empty"><b>ยังไม่มีสินค้า</b><p>คัดลอกตารางจาก Google Sheet ทั้งแถวหัวตาราง แล้วกด <b>วางจาก Sheet</b><br>ต้องมีอย่างน้อยคอลัมน์ Item ID, Amt, Point Req และ Limit</p></div>`}
     </section>
