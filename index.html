@@ -3165,7 +3165,7 @@ function xlItemRow(x){
 }
 /* pack → bundles. FIXED pack: 1 bundle (items + GSP + EXP). RANDOM pack: "name" FIXED (sure items + GSP + EXP) + "name - Random" RANDOM. */
 function xlPack(p){
-  const errors = [], warns = [], name = String(p.name || "").trim(), price = n(p.price), seed = n(S.settings.seed) || 10;
+  const errors = [], warns = [], name = bundleBase(p), price = n(p.price), seed = n(S.settings.seed) || 10;
   if (!name) errors.push("ยังไม่มีชื่อแพ็ก");
   if (isSP(p) ? !(price > 0) : p.bonus !== false && !(price > 0)) errors.push(isSP(p) ? "ยังไม่ได้ใส่ราคา (ต้องใช้คำนวณ GSP / EXP)" : "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
   const rnd = p.mode === "random";
@@ -3237,14 +3237,14 @@ function xlProduct(p){
   const cat = azCatOf(p); if (!cat) errors.push("ยังไม่ได้เลือกหมวดหมู่ใน Aztek");
   if (!p.start) errors.push("ยังไม่ได้ใส่วันเริ่มขาย"); if (!p.end) errors.push("ยังไม่ได้ใส่วันหยุดขาย");
   if (rs.on && !rs.firstDate) errors.push("เลือก Reset แต่ยังไม่ได้ใส่วัน Reset ครั้งแรก");
-  const sp = payAmt(p);
+  const sp = payAmt(p), bn = bundleBase(p);
   const row = ["GAME", name, name, cat, sortTypes(p.types).map(TAG_NAME).join(", "), "", "", "", "", "", "",
     n(p.pos), xlDT(p.start, p.startTime), xlDT(p.end, p.endTime),
     n(p.limit) > 0 ? n(p.limit) : "", "", "", "",
     rs.on ? Math.max(1, Math.floor(n(rs.every)) || 1) : "", "", rs.on ? xlDT(rs.firstDate, rs.firstTime) : "",
     "TRUE", "TRUE", "FALSE", payCur(p), sp, sp,
     ...(String(p.currency2 || "").trim() && n(p.curPrice2) > 0 ? [p.currency2.trim(), n(p.curPrice2), n(p.curPrice2)] : ["", "", ""]), "", "", "",
-    ...(p.mode === "random" && !p.items.some(x => x.fixed) && p.bonus === false ? [name + " - Random", ""] : [name, p.mode === "random" ? name + " - Random" : ""])];
+    ...(p.mode === "random" && !p.items.some(x => x.fixed) && p.bonus === false ? [bn + " - Random", ""] : [bn, p.mode === "random" ? bn + " - Random" : ""])];
   return { p, row, errors:[...new Set(errors)] };
 }
 const XL_MODES = { bundle:"Bundle", product:"Product", both:"ทั้งคู่ (2 ไฟล์)" };
@@ -3736,7 +3736,13 @@ const SHV = { paste:null, q:"", azCustom:false };
 const itemOfRow = p => p.items[0] || null;
 function shopName(sh, x){
   const base = String(x?.name || "").trim() || "(ไม่มีชื่อ)";
-  return `${sh.prefix ? sh.prefix.trim() + " " : ""}${base}${n(x?.amt) > 1 ? ` x${fmt(n(x.amt), 0)}` : ""}`;
+  return `${base}${n(x?.amt) > 1 ? ` x${fmt(n(x.amt), 0)}` : ""}`;
+}
+/* Bundle name in Aztek: shop prefix + product name (the Product itself keeps the plain name) */
+function bundleBase(p){
+  const name = String(p.name || "").trim(), f = S.folders.find(f => f.packs.includes(p));
+  const pre = isShop(f) ? String(shopOf(f).prefix || "").trim() : "";
+  return pre && name ? `${pre} ${name}` : name;
 }
 /* copy shop settings into each product, name it and order it */
 function syncShop(f){
@@ -3840,7 +3846,7 @@ function renderShop(){
         ${fld("shs-cur1", `สกุลเงินหลัก <span class="req">*</span>`, inp("cur1", "เช่น Battery"), "ชื่อต้องตรงกับใน Aztek")}
         ${fld("shs-cur2", `สกุลเงินที่ 2 <span class="opt-l">ไม่บังคับ</span>`, inp("cur2", "เช่น Ticket"), "ใส่เมื่อบางสินค้าต้องจ่ายทั้ง 2 อย่าง")}
         ${fld("shs-azCat", `หมวดหมู่ใน Aztek <span class="req">*</span>`, `<select id="shs-azCat" data-shaz>${azOpts}</select>${azCustom ? `<input id="shs-azc" data-shs="azCat" value="${esc(sh.azCat)}" placeholder="เช่น Rank Shop - 🔋 Battery Shop" aria-label="หมวดหมู่ใน Aztek (กรอกเอง)">` : ""}`, azCustom ? "ต้องตรงกับใน Aztek ทุกตัวอักษร รวมไอคอน" : "")}
-        ${fld("shs-prefix", `ชื่อนำหน้าสินค้า <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น [Battery Shop]"), "กันชื่อ Bundle ซ้ำกับร้านอื่น")}
+        ${fld("shs-prefix", `ชื่อนำหน้า Bundle <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น Shop Savior's"), "Bundle = คำนี้ + ชื่อไอเทม · ชื่อ Product ไม่มีคำนี้")}
         <div class="fld when"><label for="shs-start">เปิดร้าน <span class="req">*</span></label><div class="dt">${inp("start", "", "date")}${inp("startTime", "", "time")}</div></div>
         <div class="fld when"><label for="shs-end">ปิดร้าน <span class="req">*</span></label><div class="dt">${inp("end", "", "date")}${inp("endTime", "", "time")}</div></div>
         ${fld("shs-sort", "ลำดับแสดง", `<select id="shs-sort" data-shs="sort"><option value="price"${sh.sort === "price" ? " selected" : ""}>ราคาสูงไปต่ำ</option><option value="row"${sh.sort === "row" ? " selected" : ""}>ตามลำดับในตาราง</option></select>`)}
