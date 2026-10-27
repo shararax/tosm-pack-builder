@@ -316,7 +316,7 @@ tr.empty-row td{color:var(--muted);text-align:center;padding:14px;font-size:12px
 .hl-q .none{font-size:14px;color:var(--muted)}
 .hl-s{grid-area:s;font-size:13px;color:var(--accent-ink)}
 .hl-s b{font-variant-numeric:tabular-nums}
-.hl:not(.rare) .hl-s{display:none}
+.hl:not(.rare) .hl-s{color:var(--muted)}
 .haul-f{display:block;font-size:14px;line-height:1.6;color:var(--accent-ink)}
 .pl-v b{font-variant-numeric:tabular-nums}
 details.dd{border:1px solid var(--line);border-radius:8px;background:var(--panel)}
@@ -1059,6 +1059,12 @@ td .cell.v-err{background:var(--bad-soft)}
 @media (max-width:860px){.shp-grid{grid-template-columns:1fr 1fr}.shp-sum .big{font-size:30px}}
 @media (max-width:520px){.shp-grid{grid-template-columns:1fr}.shp-grid .fld.when{grid-column:auto}}
 #shs-azc{margin-top:4px}
+
+/* simulation: amount per draw + plain-language notes */
+.hl-amt{display:inline-block;margin-left:4px;font-size:11px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:0 7px;vertical-align:1px;white-space:nowrap}
+.haul-h p,.haul-sum p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:400}
+.dd > summary small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:1px}
+.kv span small{display:block;font-size:11px;color:var(--muted)}
 /* database mode: sign-in, account, users, edit locks */
 .sb-cover{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);color:var(--ink)}
 .sb-card{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(10,16,24,.12)}
@@ -2109,6 +2115,9 @@ function verdictLine(value, pay, short = false){
   if (d >= 0) return (short ? "ได้ของเกินที่จ่าย " : "ได้ของมากกว่าเงินที่จ่าย ") + `<b>฿${fmt(d)}</b>` + (x >= 2 ? ` (คุ้ม ${fmt(x,1)} เท่า)` : "");
   return (short ? "ได้ของน้อยกว่าที่จ่าย " : "ได้ของน้อยกว่าเงินที่จ่าย ") + `<b>฿${fmt(-d)}</b>`;
 }
+/* the same item can sit in several rows with different amounts: always show "×amount per draw" next to the name */
+const amtTag = x => `<span class="hl-amt">×${fmt(n(x?.amt), 0)} ต่อครั้ง</span>`;
+const nameAmt = x => `${x?.name || "(ไม่มีชื่อ)"} ×${fmt(n(x?.amt), 0)}`;
 function renderSim(){
   const el = $("#sim"); if (!el) return;
   const p = active();
@@ -2138,37 +2147,40 @@ function renderSim(){
   if (!haul.length) { el.innerHTML = html + `<div class="sim-note">ใส่ % โอกาสให้ไอเทมสุ่มก่อน แล้วผลจะขึ้นที่นี่</div></div></section>`; return; }
 
   html += `<div class="haul">
-      <div class="haul-h"><b>สุ่ม ${fmt(M,0)} ครั้ง (จ่าย ฿${fmt(pay)}) โดยเฉลี่ยจะได้</b></div>
+      <div class="haul-h"><b>ถ้าผู้เล่น 1 คนสุ่ม ${fmt(M,0)} ครั้ง (จ่าย ฿${fmt(pay)}) โดยเฉลี่ยจะได้</b>
+        <p>เป็นค่าเฉลี่ยตามโอกาสที่ตั้งไว้ ผู้เล่นแต่ละคนอาจได้มากหรือน้อยกว่านี้ · ตัวเลขด้านขวาคือจำนวนชิ้นรวมหลังสุ่มครบ ${fmt(M,0)} ครั้ง</p></div>
       <div class="haul-list">${haul.map(({x,pcs,every}) => { const m = BYID.get(x.itemId), rare = !x.fixed && pcs < 1;
+        const share = x.fixed ? 1 : 1 / every, atLeast = 1 - Math.pow(1 - share, M);
         return `<div class="hl${rare ? " rare" : ""}">
           ${icon(m?.img, m?.grade, x.name)}
-          <span class="hl-n">${esc(x.name || "(ไม่มีชื่อ)")}${x.fixed ? ` <span class="pill">ได้แน่นอน</span>` : ""}</span>
-          <span class="hl-q">${rare ? `<span class="none">ไม่ถึง 1 ชิ้น</span>` : `${x.fixed ? "" : "ประมาณ "}<b>${wholeOr1(pcs)}</b> ชิ้น`}</span>
-          ${rare ? `<span class="hl-s">ต้องสุ่มประมาณ <b>${times(every)}</b> ครั้ง ถึงจะได้ 1 ครั้ง</span>` : ""}
+          <span class="hl-n">${esc(x.name || "(ไม่มีชื่อ)")} ${amtTag(x)}${x.fixed ? ` <span class="pill">ได้แน่นอนทุกครั้ง</span>` : ""}</span>
+          <span class="hl-q">${rare ? `<span class="none">ส่วนใหญ่ยังไม่ได้</span>` : `รวม${x.fixed ? "" : "ประมาณ"} <b>${wholeOr1(pcs)}</b> ชิ้น`}</span>
+          <span class="hl-s">${x.fixed ? `ได้ ${fmt(n(x.amt),0)} ชิ้นทุกครั้งที่สุ่ม` : `โอกาสออก ${fmt(share * 100, 3)}% ต่อครั้ง`}${rare ? ` · เฉลี่ยต้องสุ่ม <b>${times(every)}</b> ครั้งถึงจะออก 1 ครั้ง · สุ่ม ${fmt(M,0)} ครั้ง มีโอกาสได้อย่างน้อย 1 ครั้ง <b>${fmt(atLeast * 100, atLeast < .1 ? 2 : 1)}%</b>` : ""}</span>
         </div>`; }).join("")}</div>
       ${(() => { const g = new Map(); haul.forEach(o => { const k = itemKey(o.x), e = g.get(k) || { x:o.x, rows:0, pcs:0 }; e.rows++; e.pcs += o.pcs; g.set(k, e); });
         const dup = [...g.values()].filter(e => e.rows > 1);
-        return dup.length ? `<div class="haul-sum"><b>รวมไอเทมเดียวกัน</b> (มีหลายแถวในพูล)${dup.map(e => { const m = BYID.get(e.x.itemId);
-          return `<div class="hl">${icon(m?.img, m?.grade, e.x.name)}<span class="hl-n">${esc(e.x.name || "(ไม่มีชื่อ)")} <span class="pill">${e.rows} แถว</span></span><span class="hl-q">รวม${e.pcs < 1 ? "" : "ประมาณ"} <b>${wholeOr1(e.pcs)}</b> ชิ้น</span></div>`; }).join("")}</div>` : ""; })()}
-      <div class="haul-f">ของทั้งหมดมีมูลค่าเฉลี่ย <b>฿${fmt(Math.round(avgVal))}</b> จากเงินที่จ่าย <b>฿${fmt(pay)}</b>
+        return dup.length ? `<div class="haul-sum"><b>รวมเป็นไอเทมเดียวกัน</b><p>ไอเทมที่อยู่หลายแถว (คนละจำนวน) นำจำนวนชิ้นของทุกแถวมารวมกัน</p>${dup.map(e => { const m = BYID.get(e.x.itemId);
+          return `<div class="hl">${icon(m?.img, m?.grade, e.x.name)}<span class="hl-n">${esc(e.x.name || "(ไม่มีชื่อ)")} <span class="pill">รวมจาก ${e.rows} แถว</span></span><span class="hl-q">รวม${e.pcs < 1 ? "" : "ประมาณ"} <b>${wholeOr1(e.pcs)}</b> ชิ้น</span></div>`; }).join("")}</div>` : ""; })()}
+      <div class="haul-f">ของทั้งหมดที่ได้ คิดเป็นมูลค่าเฉลี่ย <b>฿${fmt(Math.round(avgVal))}</b> เทียบกับเงินที่จ่าย <b>฿${fmt(pay)}</b>
         · ${verdictLine(avgVal, pay)}</div>
     </div>`;
-  if (Math.abs(r.chanceSum - 100) > 0.0001 && r.chanceSum > 0) html += `<div class="sim-note warn">โอกาสรวมของสุ่มยังไม่ครบ 100% (ตอนนี้ ${fmt(r.chanceSum,4)}%) ผลนี้คิดเทียบเป็นสัดส่วนให้</div>`;
+  if (Math.abs(r.chanceSum - 100) > 0.0001 && r.chanceSum > 0) html += `<div class="sim-note warn">โอกาสรวมของสุ่มยังไม่ครบ 100% (ตอนนี้ ${fmt(r.chanceSum,4)}%) · ระบบปรับให้รวมเป็น 100% ตามสัดส่วนก่อนคำนวณ ตัวเลขด้านบนจึงอาจไม่ตรงกับเรทที่จะใส่ใน Aztek</div>`;
 
   // ---- drop-down 1: try it with real random players
   const op = k => SIM.open[k] ? " open" : "";
-  html += `<details class="dd" data-dd="real"${op("real")}><summary>ลองสุ่มจริงกับผู้เล่นหลายคน</summary><div class="dd-b">
+  html += `<details class="dd" data-dd="real"${op("real")}><summary>ลองจำลองผู้เล่นหลายคนสุ่มจริง <small>คอมพิวเตอร์สุ่มให้ตามโอกาสที่ตั้งไว้ เพื่อดูว่าโชคของแต่ละคนต่างกันแค่ไหน</small></summary><div class="dd-b">
     <div class="simbar"><div class="fld"><label for="sim-players">จำนวนผู้เล่น</label><input id="sim-players" type="number" min="1" step="1" value="${SIM.players}"></div>
       <button class="btn pri" id="btn-sim">${R ? "สุ่มใหม่" : "เริ่มสุ่ม"}</button>
-      <span class="sim-note">ทุกคนสุ่มคนละ ${fmt(M,0)} ครั้ง</span></div>`;
+      <span class="sim-note">ทุกคนสุ่มคนละ ${fmt(M,0)} ครั้ง · กดสุ่มใหม่ได้ผลไม่เหมือนเดิมทุกครั้ง</span></div>`;
   if (R && stale) html += `<div class="sim-note warn">แพ็กมีการแก้ไขหลังสุ่ม กด “สุ่มใหม่” เพื่ออัปเดต</div>`;
   if (R) {
     const luckyAll = R.winners;
-    html += `<p class="say">ผู้เล่น <b>${fmt(R.N,0)} คน</b> สุ่มคนละ <b>${fmt(R.M,0)} ครั้ง</b> · ได้ของคุ้มกว่าเงินที่จ่าย <b>${fmt(luckyAll,0)} คน</b> · ได้น้อยกว่าเงินที่จ่าย <b>${fmt(R.N - luckyAll,0)} คน</b></p>
+    html += `<p class="say">ผู้เล่น <b>${fmt(R.N,0)} คน</b> สุ่มคนละ <b>${fmt(R.M,0)} ครั้ง</b> · ได้ของมูลค่ามากกว่าเงินที่จ่าย <b>${fmt(luckyAll,0)} คน</b> · ได้น้อยกว่าเงินที่จ่าย <b>${fmt(R.N - luckyAll,0)} คน</b></p>
+      <p class="sim-note">รายการด้านล่าง: ไอเทมสุ่มแต่ละแถว มีผู้เล่นกี่คนที่สุ่มได้อย่างน้อย 1 ครั้ง (เรียงจากหายากไปหาง่าย)</p>
       <div class="who">${p.items.map((x,i) => ({x,i})).filter(o => !o.x.fixed && n(o.x.chance) > 0)
         .sort((a,b) => n(a.x.chance) - n(b.x.chance)).map(({x,i}) => { const m = BYID.get(x.itemId), got = R.owners[i];
-          return `<div class="who-r">${icon(m?.img, m?.grade, x.name, "ico sm")}<span class="who-n">${esc(x.name || "(ไม่มีชื่อ)")}</span>
-            <span class="who-q"><b>${fmt(got,0)}</b> คนได้ · <span class="muted">${fmt(R.N - got,0)} คนไม่ได้</span></span>
+          return `<div class="who-r">${icon(m?.img, m?.grade, x.name, "ico sm")}<span class="who-n">${esc(x.name || "(ไม่มีชื่อ)")} ${amtTag(x)}</span>
+            <span class="who-q">ได้ <b>${fmt(got,0)}</b> คน · <span class="muted">ไม่ได้เลย ${fmt(R.N - got,0)} คน</span></span>
             <span class="who-bar"><i style="width:${got / R.N * 100}%"></i></span></div>`; }).join("")}</div>`;
   }
   html += `</div></details>`;
@@ -2181,7 +2193,7 @@ function renderSim(){
     const shown = sorted.slice(0, SIM.show);
     const chip = ([i,c]) => { const x = p.items[i], m = BYID.get(x?.itemId), nm = x?.name || "";
       return `<span class="gchip${i === R.top ? " top" : ""}" title="${esc(nm)}">${icon(m?.img, m?.grade, nm, "ico")}${esc(nm.length > 24 ? nm.slice(0,23) + "…" : nm)} <b>×${fmt(c * n(x?.amt),0)}</b></span>`; };
-    html += `<details class="dd" data-dd="players"${op("players")}><summary>ดูว่าผู้เล่นแต่ละคนได้อะไร</summary><div class="dd-b">
+    html += `<details class="dd" data-dd="players"${op("players")}><summary>ดูว่าผู้เล่นแต่ละคนได้อะไร <small>ตัวเลข ×… คือจำนวนชิ้นรวมที่คนนั้นได้</small></summary><div class="dd-b">
       <div class="simbar"><select id="sim-sort" aria-label="เรียงผู้เล่น"><option value="value-desc"${SIM.sort==="value-desc"?" selected":""}>คนที่ได้ของมากสุดก่อน</option><option value="value-asc"${SIM.sort==="value-asc"?" selected":""}>คนที่ได้ของน้อยสุดก่อน</option><option value="no"${SIM.sort==="no"?" selected":""}>ตามลำดับผู้เล่น</option></select>
         <span style="flex:1"></span><button class="btn" id="btn-sim-copy">คัดลอกไปวางใน Sheet</button></div>
       <div class="plist">${shown.map(pl => { const d = pl.value - pl.spend;
@@ -2192,21 +2204,21 @@ function renderSim(){
 
     // ---- drop-down 3: numbers for the team
     const avgRet = R.price > 0 ? R.total / R.spend : NaN;
-    html += `<details class="dd" data-dd="nums"${op("nums")}><summary>ตัวเลขละเอียด (สำหรับทีม)</summary><div class="dd-b">
+    html += `<details class="dd" data-dd="nums"${op("nums")}><summary>ตัวเลขละเอียด (สำหรับทีม) <small>ผลรวมของผู้เล่นทุกคนในการจำลองครั้งนี้</small></summary><div class="dd-b">
       <div class="kv wide">
         <span>เงินที่ผู้เล่นทุกคนจ่ายรวม</span><span>฿${fmt(R.spend,0)}</span>
         <span>มูลค่าของที่แจกออกไปรวม</span><span>฿${fmt(R.total,0)}</span>
-        <span>มูลค่าที่ได้เทียบเงินที่จ่าย (เฉลี่ย / ตามทฤษฎี)</span><span>${fmt(avgRet*100,1)}% / ${fmt(R.theory*100,1)}%</span>
-        <span>คนที่ได้น้อยสุด / คนส่วนใหญ่ / คนที่ได้มากสุด</span><span>฿${fmt(R.min,0)} / ฿${fmt(R.median,0)} / ฿${fmt(R.max,0)}</span>
-        ${R.buckets.map(b => `<span>ผู้เล่นที่ได้มูลค่า ${b.l} ของเงินที่จ่าย</span><span>${fmt(b.c,0)} คน</span>`).join("")}
+        <span>ได้ของคืนกี่ % ของเงินที่จ่าย<small>ผลจำลองครั้งนี้ / ค่าที่ควรได้ตามโอกาสที่ตั้ง (100% = ได้คืนเท่าที่จ่าย)</small></span><span>${fmt(avgRet*100,1)}% / ${fmt(R.theory*100,1)}%</span>
+        <span>มูลค่าที่ผู้เล่นได้<small>คนที่โชคร้ายสุด / คนตรงกลาง (ค่ามัธยฐาน) / คนที่โชคดีสุด</small></span><span>฿${fmt(R.min,0)} / ฿${fmt(R.median,0)} / ฿${fmt(R.max,0)}</span>
+        ${R.buckets.map(b => `<span>ผู้เล่นที่ได้ของมูลค่า ${b.l} ของเงินที่จ่าย</span><span>${fmt(b.c,0)} คน</span>`).join("")}
       </div>
-      <div class="tblwrap"><table><thead><tr><th>ไอเทม</th><th class="r">โอกาสที่ตั้ง</th><th class="r">ออกจริง</th><th class="r">ชิ้นรวม</th><th class="r">มูลค่ารวม (THB)</th></tr></thead><tbody>
-      ${p.items.map((x,i) => ({x,i})).filter(o => R.draws[o.i] > 0 || (!o.x.fixed && n(o.x.chance) > 0)).map(({x,i}) => `<tr><td>${esc(x.name || "(ไม่มีชื่อ)")}</td>
+      <div class="tblwrap"><table><thead><tr><th>ไอเทม (จำนวนต่อครั้ง)</th><th class="r">โอกาสที่ตั้งไว้</th><th class="r">ออกจริงในการจำลอง</th><th class="r">ชิ้นรวม</th><th class="r">มูลค่ารวม (THB)</th></tr></thead><tbody>
+      ${p.items.map((x,i) => ({x,i})).filter(o => R.draws[o.i] > 0 || (!o.x.fixed && n(o.x.chance) > 0)).map(({x,i}) => `<tr><td>${esc(nameAmt(x))}</td>
         <td class="r num">${x.fixed ? "ได้แน่นอน" : fmt(n(x.chance) * (R.W ? 100 / R.W : 1), 4) + "%"}</td>
         <td class="r num">${fmt(R.draws[i],0)} ครั้ง${x.fixed ? "" : ` (${fmt(R.draws[i] / (R.N*R.M) * 100, 3)}%)`}</td>
         <td class="r num">${fmt(R.draws[i] * n(x.amt),0)}</td><td class="r num">${fmt(R.draws[i] * R.unitTHB[i])}</td></tr>`).join("")}
       </tbody></table></div>
-      <div class="sim-note">มูลค่าคิดจาก TP ที่กรอก × ${fmt(rate)} THB และรวมของที่ได้แน่นอนทุกครั้ง</div>
+      <div class="sim-note">มูลค่า = TP ต่อชิ้นที่กรอก × ${fmt(rate)} บาท · รวมของที่ได้แน่นอนทุกครั้งที่สุ่มด้วย</div>
     </div></details>`;
   }
   el.innerHTML = html + `</div></section>`;
@@ -2216,7 +2228,7 @@ function copySim(){
   const R = SIM.res, p = active(); if (!R) return;
   const hdr = ["ผู้เล่น","จ่าย (THB)","มูลค่าของที่ได้ (THB)","ส่วนต่าง (THB)","คุ้มกี่เท่า","ไอเทมที่ได้"];
   const lines = [hdr.join("\t")].concat(R.players.map(pl => [pl.no, pl.spend, +pl.value.toFixed(2), +(pl.value - pl.spend).toFixed(2),
-    pl.spend > 0 ? +(pl.value / pl.spend).toFixed(2) : "", pl.got.map(([i,c]) => `${p.items[i]?.name} x${c * n(p.items[i]?.amt)}`).join(", ")].join("\t")));
+    pl.spend > 0 ? +(pl.value / pl.spend).toFixed(2) : "", pl.got.map(([i,c]) => `${p.items[i]?.name} x${c * n(p.items[i]?.amt)} (ออก ${c} ครั้ง ครั้งละ ${n(p.items[i]?.amt)})`).join(", ")].join("\t")));
   const text = lines.join("\n");
   navigator.clipboard.writeText(text).then(() => toast("คัดลอกผลจำลองแล้ว วางใน Google Sheet ได้เลย"), () => {
     const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select(); try { document.execCommand("copy"); toast("คัดลอกแล้ว"); } catch { toast("คัดลอกไม่ได้"); } ta.remove(); });
