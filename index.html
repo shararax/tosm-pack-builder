@@ -901,6 +901,17 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-sold-f h3{margin:0 0 6px;font:600 13px var(--f-display);color:var(--muted)}
 .iv-sold-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--line);font-size:13px}
 .iv-sold-r small{display:block;font-size:11px;color:var(--muted)}
+.iv-sold-v{display:flex;align-items:center;gap:8px}.iv-sold-v .iv-tx{display:inline}
+.iv-tx{font-size:11px;color:var(--muted);white-space:nowrap;margin-right:6px}
+.si-in{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.si-in textarea{flex:1 1 320px}.si-in label{font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.si{display:flex;flex-direction:column;gap:10px}.si-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}.si-h b{font:600 16px var(--f-display)}.si-h span{font-size:12.5px;color:var(--muted)}
+.si-wrap{overflow:auto;max-height:60vh;border:1px solid var(--line);border-radius:8px}
+.si-t{width:100%;border-collapse:collapse;font-size:12.5px}.si-t th{position:sticky;top:0;z-index:1;background:var(--panel-2);color:var(--ink);text-align:left;font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.si-t th small{display:block;font-weight:400;color:var(--muted);font-size:10.5px}.si-t td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.si-t td small{display:block;font-size:11px;color:var(--muted)}.si-t .r{text-align:right}.si-t tr.miss td{background:var(--warn-soft)}
+.si-pick{max-width:320px;width:100%;font-size:12.5px}.si-s{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:99px;white-space:nowrap}
+.si-s.ok{background:var(--good-soft);color:var(--good)}.si-s.warn{background:var(--warn-soft);color:var(--warn)}.si-s.bad{background:var(--bad-soft);color:var(--bad)}
+.si-t td small.si-w{color:var(--warn)}.si-t td small.si-old{color:var(--muted)}.si-a{display:flex;gap:8px;justify-content:flex-end}
 .iv-empty{padding:40px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:12px}
 
 
@@ -1208,6 +1219,7 @@ td .cell.v-err{background:var(--bad-soft)}
     <p>ต้องตรงกับในระบบ Aztek ทุกตัวอักษร รวมถึงไอคอน ถ้าไม่ตรงให้คัดลอกจาก Aztek มาวางทับ</p>
     <div id="s-az"></div></details>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
+<script src="/config.js"></script>
     <button class="btn" id="btn-csv">นำเข้า CSV</button>
     <button class="btn" id="btn-theme">สลับธีม</button>
     <span style="flex:1"></span>
@@ -1219,7 +1231,6 @@ td .cell.v-err{background:var(--bad-soft)}
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="/config.js"></script>
 <script>
 (() => {
 "use strict";
@@ -3506,25 +3517,104 @@ function detailHTML(r, D){
         return `<tr><td>${esc(e.p.name)} <small class="bt">${e.p.mode === "random" ? "Random" : "Fixed"}</small></td><td class="nw">${e.sp ? `${thShort(e.sp[0])} – ${thShort(e.sp[1])}` : "–"}</td><td class="tlc">${tl(e)}</td>
           <td class="r num">${e.b.rand ? `≈${ifmt(e.b.pcs)} <small>(${fmt(e.b.ch, 4)}%)</small>` : ifmt(e.b.pcs)}</td>
           <td class="r num">${lim > 0 ? `${fmt(lim,0)} × ${ri.on ? (ri.periods || "?") : 1}` : "ไม่จำกัด"}</td>
-          <td class="r"><input class="iv-in" id="sold-${e.p.id}" type="number" min="0" step="1" data-sold="${e.f.id}|${e.p.id}" value="${esc(e.p.sold ?? "")}" placeholder="–" aria-label="ยอดขายจริงของ ${esc(e.p.name)}"></td>
+          <td class="r">${txTag(e.p)}<input class="iv-in" id="sold-${e.p.id}" type="number" min="0" step="1" data-sold="${e.f.id}|${e.p.id}" value="${esc(e.p.sold ?? "")}" placeholder="–" aria-label="ยอดขายจริงของ ${esc(e.p.name)}"></td>
           <td class="r num">${v === null ? "–" : v === Infinity ? "∞" : (e.b.rand ? "≈" : "") + ifmt(v)}${share(e) < 1 ? `<small> (${Math.round(share(e) * 100)}% ของช่วง)</small>` : ""}</td></tr>`; }).join("")}</tbody>`).join("")}</table>`;
 }
+const txTag = p => String(p.soldTx ?? "") !== "" ? `<small class="iv-tx" title="จำนวนครั้งที่กดซื้อ (transactions) · 1 ครั้งซื้อได้หลายแพ็ก">กดซื้อ ${fmt(n(p.soldTx), 0)} ครั้ง</small>` : "";
 function soldPanelHTML(D){
+  if (IV.imp) return `<section class="iv-sold" aria-label="ยอดขายจริง">${salesPreviewHTML()}</section>`;
   const byF = new Map(); D.entries.forEach(e => { const l = byF.get(e.f) || []; l.push(e); byF.set(e.f, l); });
   return `<section class="iv-sold" aria-label="ยอดขายจริง"><div class="iv-sold-h"><h2>ยอดขายจริงของแต่ละแพ็ก</h2>
-      <p>ใส่จำนวนครั้งที่ขายได้ (จาก Aztek หรือรายงานยอดขาย) ระบบคูณเป็นจำนวนชิ้นให้ · หรือวางตาราง 2 คอลัมน์ ชื่อแพ็ก · จำนวน ลงช่องด้านล่าง</p></div>
-    <textarea id="iv-paste" rows="2" placeholder="วางจาก Sheet: ชื่อแพ็ก [Tab] จำนวนครั้งที่ขาย"></textarea>
+      <p>ใส่จำนวนครั้งที่ขายได้ ระบบคูณเป็นจำนวนชิ้นให้ · วางรายงานยอดขายทั้งตาราง (รวมหัวตาราง Product · sum_quantity · transactions …) หรือตาราง 2 คอลัมน์ ชื่อแพ็ก · จำนวน ลงช่องด้านล่าง</p></div>
+    <div class="si-in"><textarea id="iv-paste" rows="2" placeholder="วางรายงานยอดขายจาก Sheet ทั้งตาราง รวมหัวตาราง"></textarea>
+      <label>จับคู่กับแพ็กใน <select id="iv-impscope"><option value="">ทุกโปรโมชัน</option>${S.folders.map(f => `<option value="${f.id}"${IV.impScope === f.id ? " selected" : ""}>${esc(f.name)}</option>`).join("")}</select></label></div>
     <div class="iv-sold-g">${[...byF].map(([f, l]) => `<div class="iv-sold-f"><h3>${esc(f.name)}</h3>${l.map(e => `<label class="iv-sold-r"><span>${esc(e.p.name)}${e.sp ? `<small>${thShort(e.sp[0])} – ${thShort(e.sp[1])}</small>` : ""}</span>
-      <input class="iv-in" id="soldp-${e.p.id}" type="number" min="0" step="1" data-sold="${f.id}|${e.p.id}" value="${esc(e.p.sold ?? "")}" placeholder="–"></label>`).join("")}</div>`).join("")}</div></section>`;
+      <span class="iv-sold-v">${txTag(e.p)}<input class="iv-in" id="soldp-${e.p.id}" type="number" min="0" step="1" data-sold="${f.id}|${e.p.id}" value="${esc(e.p.sold ?? "")}" placeholder="–"></span></label>`).join("")}</div>`).join("")}</div></section>`;
 }
 function setSold(fid, pid, v){
   const f = S.folders.find(x => x.id === fid), p = f?.packs.find(x => x.id === pid); if (!p) return false;
-  const t = String(v ?? "").trim(); p.sold = t === "" ? "" : Math.max(0, Math.round(n(t))); f.updated = Date.now(); return true;
+  const t = String(v ?? "").trim(); p.sold = t === "" ? "" : Math.max(0, Math.round(n(t))); if (t === "") delete p.soldTx; f.updated = Date.now(); return true;
+}
+/* ---------- sales report import: paste the Aztek sales table (Product · product_id · transactions · sum_quantity · currency · unit_price · total) ----------
+   match each row to a pack: remembered product_id → same name → same name ignoring spaces / case → same name without a "Flash Sale : " style prefix.
+   nothing is written until the person checks the list and presses the button. */
+const nameNorm = s => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+const namePre = s => String(s || "").normalize("NFKC").replace(/^[^:：]{1,40}[:：]\s*/, "");
+const numOf = s => { const t = String(s ?? "").replace(/[,\s฿]/g, ""); return t === "" || isNaN(+t) ? null : +t; };
+function salesHead(rows){
+  const h = (rows[0] || []).map(c => String(c).trim().toLowerCase());
+  const at = re => h.findIndex(c => re.test(c));
+  const c = { name:at(/^product$|^product\s*name|ชื่อ/), pid:at(/product_?id/), tx:at(/^transactions?$/), qty:at(/sum_?quantity|^quantity$/), cur:at(/^currency$/), price:at(/unit_?price/), total:at(/^total$/) };
+  return c.name >= 0 && c.qty >= 0 ? c : null;
+}
+function salesMatch(r, packs){
+  const all = S.folders.flatMap(f => shown(f.packs).map(p => ({ f, p })));
+  if (r.pid) { const e = all.find(e => e.p.azProductId === r.pid); if (e) return { e, how:"id" }; }
+  const tries = [["exact", e => String(e.p.name).trim() === r.name.trim()],
+    ["space", e => nameNorm(e.p.name) === nameNorm(r.name)],
+    ["prefix", e => nameNorm(namePre(e.p.name)) === nameNorm(namePre(r.name))]];
+  for (const [how, ok] of tries) {
+    let hit = packs.filter(ok); if (!hit.length) continue;
+    if (hit.length > 1 && r.price != null) { const same = hit.filter(e => Math.abs(payAmt(e.p) - r.price) < .005); if (same.length) hit = same; }
+    if (hit.length === 1) return { e:hit[0], how };
+    return { e:null, how:"many", cands:hit };
+  }
+  return { e:null, how:"none" };
+}
+function salesCheck(r, e){
+  if (!e) return "";
+  const pc = payCur(e.p), amt = payAmt(e.p), w = [];
+  if (r.cur && nameNorm(r.cur) !== nameNorm(pc)) w.push(`สกุลเงินในรายงาน ${r.cur} · แพ็กนี้ ${pc}`);
+  else if (r.price != null && Math.abs(amt - r.price) >= .005) w.push(`ราคาในรายงาน ${fmt(r.price, 0)} · แพ็กนี้ ${fmt(amt, 0)} ${pc}`);
+  return w.join(" · ");
+}
+function salesParse(text){
+  const rows = parseTSV(text || ""), c = salesHead(rows); if (!c) return null;
+  const scope = S.folders.filter(f => !IV.impScope || f.id === IV.impScope).flatMap(f => shown(f.packs).map(p => ({ f, p })));
+  const get = (r, i) => i >= 0 ? String(r[i] ?? "").trim() : "";
+  return rows.slice(1).map(r => ({ name:get(r, c.name), pid:get(r, c.pid), tx:numOf(get(r, c.tx)), qty:numOf(get(r, c.qty)), cur:get(r, c.cur), price:numOf(get(r, c.price)), total:numOf(get(r, c.total)) }))
+    .filter(r => r.name && r.qty != null)
+    .map(r => { const m = salesMatch(r, scope); return { ...r, how:m.how, cands:m.cands || [], key:m.e ? m.e.f.id + "|" + m.e.p.id : "" }; });
+}
+const HOW_TXT = { id:"จำจาก product_id", exact:"ชื่อตรงกัน", space:"ชื่อตรง (ไม่นับเว้นวรรค)", prefix:"ชื่อตรง (ตัดคำนำหน้า)", pick:"เลือกเอง", many:"ชื่อซ้ำหลายแพ็ก · เลือกเอง", none:"ไม่พบ · เลือกเอง" };
+const packOfKey = k => { const [fid, pid] = String(k || "").split("|"), f = S.folders.find(x => x.id === fid), p = f?.packs.find(x => x.id === pid); return p ? { f, p } : null; };
+function salesPreviewHTML(){
+  const L = IV.imp; if (!L) return "";
+  const keys = L.map(r => r.key).filter(Boolean), dup = new Set(keys.filter((k, i) => keys.indexOf(k) !== i));
+  const ok = L.filter(r => r.key).length;
+  const opts = (r) => { const pref = new Set(r.cands.map(e => e.f.id + "|" + e.p.id));
+    const fl = S.folders.filter(f => shown(f.packs).length);
+    return `<option value="">— ไม่ใส่แถวนี้ —</option>${r.cands.length ? `<optgroup label="ชื่อตรงกัน">${r.cands.map(e => `<option value="${e.f.id}|${e.p.id}"${r.key === e.f.id + "|" + e.p.id ? " selected" : ""}>${esc(e.p.name)} · ${esc(e.f.name)}</option>`).join("")}</optgroup>` : ""}
+      ${fl.map(f => `<optgroup label="${esc(f.name)}">${shown(f.packs).filter(p => !pref.has(f.id + "|" + p.id)).map(p => `<option value="${f.id}|${p.id}"${r.key === f.id + "|" + p.id ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</optgroup>`).join("")}`; };
+  return `<div class="si" aria-label="ตรวจการจับคู่ยอดขาย">
+    <div class="si-h"><b>ตรวจก่อนใส่ยอดขาย</b><span>${L.length} แถว · จับคู่ได้ ${ok} · ยังไม่ได้จับคู่ ${L.length - ok}</span></div>
+    <div class="si-wrap"><table class="si-t"><thead><tr><th>Product ในรายงาน</th><th class="r">ขายได้<small>sum_quantity</small></th><th class="r">กดซื้อ<small>transactions</small></th><th class="r">ราคา</th><th>แพ็กในเครื่องมือ</th><th>สถานะ</th></tr></thead><tbody>
+    ${L.map((r, i) => { const e = packOfKey(r.key), w = salesCheck(r, e), d = r.key && dup.has(r.key);
+      const st = !r.key ? `<span class="si-s bad">${HOW_TXT[r.how === "many" ? "many" : "none"]}</span>` : `<span class="si-s ${w || d ? "warn" : "ok"}">${HOW_TXT[r.how] || HOW_TXT.pick}</span>`;
+      return `<tr${!r.key ? ' class="miss"' : ""}><td>${esc(r.name)}${r.pid ? `<small>${esc(r.pid.slice(0, 13))}…</small>` : ""}</td><td class="r num">${fmt(r.qty, 0)}</td><td class="r num">${r.tx == null ? "–" : fmt(r.tx, 0)}</td>
+        <td class="r num">${r.price == null ? "–" : fmt(r.price, 0)}<small>${esc(r.cur)}</small></td>
+        <td><select class="si-pick" data-simp="${i}" aria-label="แพ็กของ ${esc(r.name)}">${opts(r)}</select>${e && String(e.p.sold ?? "") !== "" && n(e.p.sold) !== r.qty ? `<small class="si-old">เดิม ${fmt(n(e.p.sold), 0)} → ${fmt(r.qty, 0)}</small>` : ""}</td>
+        <td>${st}${w ? `<small class="si-w">⚠ ${esc(w)}</small>` : ""}${d ? `<small class="si-w">⚠ มีหลายแถวจับคู่กับแพ็กนี้ · จะรวมยอดกัน</small>` : ""}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="si-a"><button class="btn" id="si-cancel">ยกเลิก</button><button class="btn pri" id="si-apply"${ok ? "" : " disabled"}>ใส่ยอดขาย ${ok} แพ็ก</button></div></div>`;
+}
+function salesApply(){
+  const L = IV.imp || [], acc = new Map();
+  L.forEach(r => { if (!r.key) return; const a = acc.get(r.key) || { qty:0, tx:0, txAny:false, pid:[] };
+    a.qty += r.qty; if (r.tx != null) { a.tx += r.tx; a.txAny = true; } if (r.pid) a.pid.push(r.pid); acc.set(r.key, a); });
+  acc.forEach((a, k) => { const e = packOfKey(k); if (!e) return;
+    e.p.sold = Math.max(0, Math.round(a.qty)); if (a.txAny) e.p.soldTx = Math.max(0, Math.round(a.tx)); else delete e.p.soldTx;
+    if (a.pid.length === 1) e.p.azProductId = a.pid[0]; e.f.updated = Date.now(); });
+  IV.imp = null; if (acc.size) save();
+  toast(`ใส่ยอดขาย ${acc.size} แพ็กแล้ว${L.some(r => !r.key) ? ` · ข้าม ${L.filter(r => !r.key).length} แถวที่ไม่ได้จับคู่` : ""}`);
+  renderItems();
 }
 const IVEL = $("#view-items");
 IVEL.addEventListener("click", e => {
   const c = e.target.closest("[data-iv]"); if (c) { const [k, v] = c.dataset.iv.split("|"); IV[k] = v; if (k === "range" && v === "custom" && !IV.from) { const r = itemsRange(); if (r) { IV.from = ymd(r[0]); IV.to = ymd(r[1]); } } renderItems(); return; }
-  if (e.target.closest("#iv-sold")) { IV.soldPanel = !IV.soldPanel; renderItems(); return; }
+  if (e.target.closest("#iv-sold")) { IV.soldPanel = !IV.soldPanel; IV.imp = null; renderItems(); return; }
+  if (e.target.closest("#si-cancel")) { IV.imp = null; renderItems(); return; }
+  if (e.target.closest("#si-apply")) return salesApply();
   if (e.target.closest("#iv-xlsx")) return exportItems();
   const clr = e.target.closest("[data-ivclear]"); if (clr) { delete IV.pick[clr.dataset.ivclear]; renderItems(); return; }
   if (e.target.closest("input,select,textarea,button")) return;
@@ -3539,13 +3629,17 @@ IVEL.addEventListener("change", e => { const t = e.target;
   if (t.id === "iv-folder") IV.folder = t.value; else if (t.id === "iv-type") IV.type = t.value; else if (t.id === "iv-grade") IV.grade = t.value;
   else if (t.id === "iv-sort") IV.sort = t.value; else if (t.id === "iv-cat") IV.cat = t.value; else if (t.id === "iv-btype") IV.btype = t.value; else if (t.id === "iv-from") IV.from = t.value; else if (t.id === "iv-to") IV.to = t.value;
   else if (t.dataset.sold) { const [fid, pid] = t.dataset.sold.split("|"); if (setSold(fid, pid, t.value)) save(); }
+  else if (t.id === "iv-impscope") { IV.impScope = t.value; }
+  else if (t.dataset.simp != null) { const r = IV.imp?.[+t.dataset.simp]; if (r) { r.key = t.value; r.how = t.value ? "pick" : r.cands.length ? "many" : "none"; } }
+  else if (t.id === "iv-paste" && salesHead(parseTSV(t.value))) { const L = salesParse(t.value);
+    if (!L.length) { toast("ไม่พบแถวที่มีชื่อ Product และ sum_quantity"); return; } IV.imp = L; }
   else if (t.id === "iv-paste") { const lines = parseTSV(t.value); let ok = 0, miss = [];
     const D = itemsData();
     lines.forEach(r => { const nm = String(r[0] || "").trim(), v = String(r[1] || "").replace(/,/g, "").trim(); if (!nm || v === "" || isNaN(+v)) return;
       const e = D.entries.find(x => String(x.p.name).trim() === nm); if (e && setSold(e.f.id, e.p.id, v)) ok++; else miss.push(nm); });
     if (ok) save(); toast(`ใส่ยอดขาย ${ok} แพ็ก${miss.length ? ` · ไม่พบ ${miss.length} ชื่อ: ${miss.slice(0, 3).join(", ")}${miss.length > 3 ? "…" : ""}` : ""}`); }
   else return;
-  renderItems();
+  if (t.tagName === "TEXTAREA" || t.dataset.simp != null) setTimeout(renderItems, 0); else renderItems();   // change fires on blur: redraw after it finishes
 });
 async function exportItems(){
   let X; try { X = await loadXLSX(); } catch { toast("โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่"); return; }
