@@ -444,6 +444,15 @@ details.dd>summary:hover{color:var(--accent)}
 .hm-colors{display:flex;gap:6px;padding:6px 10px}
 .hm-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--panel);background:var(--dc);cursor:pointer;box-shadow:0 0 0 1px var(--line)}
 .hm-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12px;color:var(--muted)}
+.hm-dbtn{border:1px dashed transparent;background:none;color:inherit;font:inherit;padding:2px 6px;margin:-2px -6px;border-radius:6px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.hm-dbtn:hover,.hm-dbtn:focus-visible{border-color:var(--line);background:var(--panel-2);color:var(--ink)}
+.hm-dedit{font-size:11px;color:var(--accent,#c9861a);font-weight:600}
+.hm-dt{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);cursor:default}
+.hm-dt-r{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:4px 6px;align-items:center;font-size:12.5px}.hm-dt-r label{grid-column:1/-1;color:var(--muted);font-size:12px}
+.hm-dt-r input{min-width:0;font:inherit;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.hm-dt-n{margin:0;font-size:12px;color:var(--muted)}.hm-dt-n b{color:var(--ink)}
+.hm-dt-c{font-size:12px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}.hm-dt-c small{flex-basis:100%;padding-left:20px;color:var(--muted)}
+.hm-dt-a{display:flex;gap:6px;justify-content:flex-end}
 .hm-st{font:600 11px var(--f-body);padding:2px 9px;border-radius:999px;background:var(--chip);color:var(--muted)}
 .hm-st.live{background:var(--good-soft);color:var(--good)}
 .hm-st.soon{background:var(--accent-soft);color:var(--accent)}
@@ -1210,6 +1219,7 @@ td .cell.v-err{background:var(--bad-soft)}
   </div>
   <div id="s-acct" hidden></div>
   <div class="fld" id="s-me-wrap" hidden><label for="s-me">ชื่อของคุณ (คนอื่นจะเห็นเมื่อคุณแก้ไข)</label><input id="s-me" maxlength="40" placeholder="เช่น SK"></div>
+<script src="/config.js"></script>
   <div id="s-api-wrap"><hr>
   <div class="fld"><label for="s-api">Apps Script URL (ลงท้ายด้วย /exec)</label><input id="s-api" placeholder="https://script.google.com/macros/s/…/exec"></div>
   <div class="fld"><label for="s-key">รหัสผ่าน (ถ้าตั้ง ACCESS_KEY ไว้ในสคริปต์)</label><input id="s-key" placeholder="เว้นว่างได้"></div>
@@ -1219,7 +1229,6 @@ td .cell.v-err{background:var(--bad-soft)}
     <p>ต้องตรงกับในระบบ Aztek ทุกตัวอักษร รวมถึงไอคอน ถ้าไม่ตรงให้คัดลอกจาก Aztek มาวางทับ</p>
     <div id="s-az"></div></details>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-<script src="/config.js"></script>
     <button class="btn" id="btn-csv">นำเข้า CSV</button>
     <button class="btn" id="btn-theme">สลับธีม</button>
     <span style="flex:1"></span>
@@ -2308,7 +2317,7 @@ $("#sim").addEventListener("click", e => {
 });
 
 /* ---------- home: dashboard of promotion folders ---------- */
-const HV = { q:"", period:"all", from:"", to:"", sort:"start", menu:null, armed:null, rename:null };
+const HV = { q:"", period:"all", from:"", to:"", sort:"start", menu:null, armed:null, rename:null, dt:null };
 const FOLDER_COLORS = ["#c9861a","#3b7dd8","#1f8a5b","#8a55d1","#c2459b","#0f9e9e","#d4572a","#5a6fd6"];
 const folderColor = f => f.color || FOLDER_COLORS[[...f.id].reduce((a,c) => a + c.charCodeAt(0), 0) % FOLDER_COLORS.length];
 const dayStart = d => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
@@ -2317,6 +2326,46 @@ function folderRange(f){
   let lo = null, hi = null;
   shown(f.packs).forEach(p => { const r = packRange(p); if (!r) return; if (!lo || r[0] < lo) lo = r[0]; if (!hi || r[1] > hi) hi = r[1]; });
   return lo ? [lo, hi] : null;
+}
+/* folder sale dates: the dates most packs share. packs on those dates (or with no dates yet) follow the folder; others keep their own */
+const DKEYS = ["start","startTime","end","endTime"];
+const dTuple = p => DKEYS.map(k => String(p[k] || "")).join("|");
+const noDates = p => !p.start && !p.end;
+function folderDates(packs){
+  const cnt = new Map(); packs.forEach(p => { if (noDates(p)) return; const k = dTuple(p); cnt.set(k, (cnt.get(k) || 0) + 1); });
+  if (!cnt.size) return null;
+  const [k] = [...cnt].sort((a, b) => b[1] - a[1])[0], v = k.split("|");
+  return { start:v[0], startTime:v[1] || "00:01", end:v[2], endTime:v[3] || "23:59" };
+}
+function folderDateGroups(f){
+  const fd = folderDates(f.packs), k = fd ? dTuple(fd) : null;
+  const follow = f.packs.filter(p => noDates(p) || dTuple(p) === k), own = f.packs.filter(p => !follow.includes(p));
+  return { fd, follow, own };
+}
+const packLockedBy = p => CLOUD?.lockedBy ? CLOUD.lockedBy(p.id) : "";
+function folderDatesHTML(f){
+  const D = HV.dt, g = folderDateGroups(f), take = D.all ? f.packs : g.follow;
+  const locked = take.filter(packLockedBy);
+  const inp = (k, type) => `<input type="${type}" data-hdt="${k}" value="${esc(D[k] || "")}" aria-label="${{ start:"วันเริ่มขาย", startTime:"เวลาเริ่ม", end:"วันจบการขาย", endTime:"เวลาจบ" }[k]}">`;
+  return `<div class="hm-dt" role="group" aria-label="วันเวลาขายของทั้งโฟลเดอร์">
+    <div class="hm-dt-r"><label>เริ่มขาย</label>${inp("start","date")}${inp("startTime","time")}</div>
+    <div class="hm-dt-r"><label>จบการขาย</label>${inp("end","date")}${inp("endTime","time")}</div>
+    <p class="hm-dt-n">จะเปลี่ยน <b>${take.length - locked.length}</b> แพ็ก${!D.all && g.own.length ? ` · ไม่เปลี่ยน ${g.own.length} แพ็กที่ตั้งวันเอง` : ""}${locked.length ? ` · ข้าม ${locked.length} แพ็กที่มีคนกำลังแก้` : ""}</p>
+    ${g.own.length ? `<label class="hm-dt-c"><input type="checkbox" data-hdt="all"${D.all ? " checked" : ""}> เปลี่ยนแพ็กที่ตั้งวันเองด้วย <small>${g.own.slice(0, 3).map(p => esc(p.name)).join(", ")}${g.own.length > 3 ? ` +${g.own.length - 3}` : ""}</small></label>` : ""}
+    <div class="hm-dt-a"><button class="btn" data-hdtgo="cancel">ยกเลิก</button><button class="btn pri" data-hdtgo="save|${f.id}">บันทึกวันขาย</button></div></div>`;
+}
+function openFolderDates(f){
+  const fd = folderDates(f.packs) || { start:"", startTime:"00:01", end:"", endTime:"23:59" };
+  HV.dt = { fid:f.id, ...fd, all:false }; HV.menu = null; renderHome();
+}
+function saveFolderDates(f){
+  const D = HV.dt; if (!D) return;
+  if (!D.start || !D.end) { toast("ใส่ทั้งวันเริ่มและวันจบการขาย"); return; }
+  if (toDT(D.end, D.endTime) < toDT(D.start, D.startTime)) { toast("วันจบการขายต้องอยู่หลังวันเริ่ม"); return; }
+  const g = folderDateGroups(f), take = (D.all ? f.packs : g.follow).filter(p => !packLockedBy(p));
+  take.forEach(p => DKEYS.forEach(k => p[k] = D[k] || (k === "startTime" ? "00:01" : k === "endTime" ? "23:59" : "")));
+  HV.dt = null; f.updated = Date.now(); save(); renderHome();
+  toast(`ตั้งวันขาย ${take.length} แพ็กแล้ว · แก้รายแพ็กได้ที่หน้าจัดแพ็กเหมือนเดิม`);
 }
 function periodWindow(){
   const now = new Date(), y = now.getFullYear(), m = now.getMonth();
@@ -2367,13 +2416,14 @@ function renderHome(){
           : `<h3 title="${esc(f.name)}">${isShop(f) ? `<span class="hm-kind">ร้านแลกไอเทม</span>` : ""}${esc(f.name)}</h3>`}
         <span class="hm-menu"><button class="hm-mbtn" data-hmenu="${f.id}" aria-label="เมนูโฟลเดอร์">⋯</button>
           ${HV.menu === f.id ? `<span class="hm-pop">
-            <button data-hact="rename|${f.id}">เปลี่ยนชื่อ</button><button data-hact="dup|${f.id}">ทำสำเนาโฟลเดอร์</button>
+            <button data-hact="rename|${f.id}">เปลี่ยนชื่อ</button>${isShop(f) ? "" : `<button data-hdates="${f.id}">ตั้งวันเวลาขายทั้งโฟลเดอร์</button>`}<button data-hact="dup|${f.id}">ทำสำเนาโฟลเดอร์</button>
             <button data-hact="export|${f.id}">บันทึกโฟลเดอร์นี้เป็นไฟล์</button>
             <button data-hact="xlsx|${f.id}">Export สำหรับ Aztek (.xlsx)</button>
             <span class="hm-colors">${FOLDER_COLORS.map(c => `<button class="hm-dot" style="--dc:${c}" data-hcolor="${f.id}|${c}" aria-label="สี ${c}"></button>`).join("")}</span>
             <button class="danger" data-hact="del|${f.id}">${HV.armed === f.id ? "กดอีกครั้งเพื่อลบ" : "ลบโฟลเดอร์"}</button></span>` : ""}</span>
       </div>
-      <div class="hm-meta"><span class="hm-st ${st.k}">${st.t}</span><span>${rangeText(r)}</span></div>
+      <div class="hm-meta"><span class="hm-st ${st.k}">${st.t}</span>${isShop(f) ? `<span>${rangeText(r)}</span>` : `<button class="hm-dbtn" data-hdates="${f.id}" title="ตั้งวันเวลาขายให้ทุกแพ็กในโฟลเดอร์">📅 ${rangeText(r)}<span class="hm-dedit">แก้</span></button>`}</div>
+      ${HV.dt?.fid === f.id ? folderDatesHTML(f) : ""}
       <div class="hm-thumbs">${thumbs || `<span class="hm-empty">ยังไม่มีแพ็ก</span>`}${f.packs.length > 4 ? `<span class="hm-more">+${f.packs.length - 4}</span>` : ""}</div>
       <div class="hm-stats"><span><b>${vis.length}</b> แพ็ก${nHid ? ` <small class="hm-hid">+ ซ่อน ${nHid}</small>` : ""}</span><span><b>${rnd}</b> สุ่ม</span><span>ลดเฉลี่ย <b>${isFinite(avg) ? fmt(avg*100,0) + "%" : "–"}</b></span></div>
       ${cats.length ? `<div class="hm-cats">${cats.slice(0,4).map(c => `<span>${esc(c)}</span>`).join("")}${cats.length > 4 ? `<span>+${cats.length - 4}</span>` : ""}</div>` : ""}
@@ -2419,18 +2469,24 @@ H.addEventListener("input", e => {
   if (e.target.id === "hm-from") { HV.from = e.target.value; renderHome(); }
   if (e.target.id === "hm-to") { HV.to = e.target.value; renderHome(); }
 });
-H.addEventListener("change", e => { if (e.target.id === "hm-sort") { HV.sort = e.target.value; renderHome(); } });
+H.addEventListener("change", e => { if (e.target.id === "hm-sort") { HV.sort = e.target.value; renderHome(); }
+  const k = e.target.dataset?.hdt; if (k && HV.dt) { HV.dt[k] = k === "all" ? e.target.checked : e.target.value; if (k === "all") renderHome(); } });
 const commitRename = inp => { const f = S.folders.find(x => x.id === inp.dataset.hrename), v = inp.value.trim();
   if (f && v) { f.name = v; f.updated = Date.now(); if (S.folderId === f.id) S.project = v; save(); } HV.rename = null; renderHome(); };
 H.addEventListener("keydown", e => {
   if (e.target.dataset?.hrename) { if (e.key === "Enter") commitRename(e.target); if (e.key === "Escape") { HV.rename = null; renderHome(); } return; }
   if (e.key === "Escape" && HV.menu) { HV.menu = null; renderHome(); return; }
+  if (e.key === "Escape" && HV.dt) { HV.dt = null; renderHome(); return; }
+  if (e.key === "Enter" && e.target.dataset?.hdt && HV.dt) { e.preventDefault(); HV.dt[e.target.dataset.hdt] = e.target.value; const f = S.folders.find(x => x.id === HV.dt.fid); if (f) saveFolderDates(f); return; }
   if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-hopen]")) { e.preventDefault(); openFolder(e.target.dataset.hopen, "build"); }
 });
 H.addEventListener("focusout", e => { if (e.target.dataset?.hrename && HV.rename) commitRename(e.target); });
 H.addEventListener("click", e => {
   const b = e.target.closest("button");
   if (e.target.closest("input,select")) return;
+  if (!b && e.target.closest(".hm-dt")) return;
+  if (b?.dataset.hdates) { const f = S.folders.find(x => x.id === b.dataset.hdates); if (f) { if (HV.dt?.fid === f.id) { HV.dt = null; renderHome(); } else openFolderDates(f); } return; }
+  if (b?.dataset.hdtgo) { const [a, id] = b.dataset.hdtgo.split("|"); if (a === "cancel") { HV.dt = null; renderHome(); return; } const f = S.folders.find(x => x.id === id); if (f) saveFolderDates(f); return; }
   if (!b) { if (HV.menu) { HV.menu = null; renderHome(); return; } const c = e.target.closest("[data-hopen]"); if (c) openFolder(c.dataset.hopen, "build"); return; }
   if (b.id === "hm-new" || b.id === "hm-new2") return createFolder();
   if (b.id === "hm-newshop") return newShop();
@@ -2634,7 +2690,7 @@ B.addEventListener("click", e => {
   if (t.dataset.badd) { const [pid, key] = t.dataset.badd.split("|"), it = byKey(key), p = S.packs.find(x => x.id === pid); if (!it || !p) return;
     const m = S.memo[it.id] || {}; S.usage[it.id] = (S.usage[it.id] || 0) + 1;
     return mut(() => { const nu = uid(); p.items.push({ uid:nu, itemId:it.id, name:it.name, amt:1, tp:m.tp ?? "", tpGame:m.tpGame ?? "", chance:"", fixed:false }); BV.edit = nu; }); }
-  if (t.dataset.bnew != null) { const c = t.dataset.bnew; return mut(() => { const np = blankPack({ name:`แพ็ก ${S.packs.length + 1}`, azCat:c }); S.packs.push(np); }); }
+  if (t.dataset.bnew != null) { const c = t.dataset.bnew; return mut(() => { const np = blankPack({ name:`แพ็ก ${S.packs.length + 1}`, azCat:c, ...(folderDates(S.packs) || {}) }); S.packs.push(np); }); }
 });
 B.addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.dataset?.bnew) { e.preventDefault(); e.target.click(); }
@@ -2978,7 +3034,7 @@ document.addEventListener("click", e => {
   switch (t.id) {
     case "btn-addcat": addCategory(); break;
     case "btn-clearf": $("#q").value = ""; ["#f-type","#f-grade","#f-trade","#f-class"].forEach(s => $(s).value = ""); renderLib(); break;
-    case "btn-newpack": BS.step = 1; { const np = blankPack({ name:`แพ็ก ${S.packs.length + 1}` }); S.packs.push(np); S.activeId = np.id; rerenderAll(); $("#p-name")?.select(); break; }
+    case "btn-newpack": BS.step = 1; { const np = blankPack({ name:`แพ็ก ${S.packs.length + 1}`, ...(folderDates(S.packs) || {}) }); S.packs.push(np); S.activeId = np.id; rerenderAll(); $("#p-name")?.select(); break; }
     case "btn-dup": { const c = JSON.parse(JSON.stringify(p)); c.id = uid(); c.name += " (สำเนา)"; c.items.forEach(x => x.uid = uid());
       S.packs.splice(S.packs.indexOf(p)+1, 0, c); S.activeId = c.id; rerenderAll(); break; }
     case "btn-delpack": confirmDelete(t, p); break;
