@@ -3890,11 +3890,13 @@ function shopName(sh, x){
   const base = String(x?.name || "").trim() || "(ไม่มีชื่อ)";
   return `${base}${n(x?.amt) > 1 ? ` x${fmt(n(x.amt), 0)}` : ""}`;
 }
-/* Bundle name in Aztek: shop prefix + product name (the Product itself keeps the plain name) */
+/* Bundle name in Aztek. shop: prefix + product name + its place in the shop (the "ลำดับ" column), so two rows with the same item never share a Bundle name.
+   the Product itself keeps the plain name */
 function bundleBase(p){
   const name = String(p.name || "").trim(), f = S.folders.find(f => f.packs.includes(p));
-  const pre = isShop(f) ? String(shopOf(f).prefix || "").trim() : "";
-  return pre && name ? `${pre} ${name}` : name;
+  if (!isShop(f) || !name) return name;
+  const pre = String(shopOf(f).prefix || "").trim(), no = n(p.pos) > 0 ? ` ${n(p.pos)}` : "";
+  return `${pre ? pre + " " : ""}${name}${no}`;
 }
 /* copy shop settings into each product, name it and order it */
 function syncShop(f){
@@ -3998,7 +4000,7 @@ function renderShop(){
         ${fld("shs-cur1", `สกุลเงินหลัก <span class="req">*</span>`, inp("cur1", "เช่น Battery"), "ชื่อต้องตรงกับใน Aztek")}
         ${fld("shs-cur2", `สกุลเงินที่ 2 <span class="opt-l">ไม่บังคับ</span>`, inp("cur2", "เช่น Ticket"), "ใส่เมื่อบางสินค้าต้องจ่ายทั้ง 2 อย่าง")}
         ${fld("shs-azCat", `หมวดหมู่ใน Aztek <span class="req">*</span>`, `<select id="shs-azCat" data-shaz>${azOpts}</select>${azCustom ? `<input id="shs-azc" data-shs="azCat" value="${esc(sh.azCat)}" placeholder="เช่น Rank Shop - 🔋 Battery Shop" aria-label="หมวดหมู่ใน Aztek (กรอกเอง)">` : ""}`, azCustom ? "ต้องตรงกับใน Aztek ทุกตัวอักษร รวมไอคอน" : "")}
-        ${fld("shs-prefix", `ชื่อนำหน้า Bundle <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น Shop Savior's"), "Bundle = คำนี้ + ชื่อไอเทม · ชื่อ Product ไม่มีคำนี้")}
+        ${fld("shs-prefix", `ชื่อนำหน้า Bundle <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น Shop Savior's"), "Bundle = คำนี้ + ชื่อไอเทม + ลำดับ · ชื่อ Product ไม่มีคำนี้")}
         <div class="fld when"><label for="shs-start">เปิดร้าน <span class="req">*</span></label><div class="dt">${inp("start", "", "date")}${inp("startTime", "", "time")}</div></div>
         <div class="fld when"><label for="shs-end">ปิดร้าน <span class="req">*</span></label><div class="dt">${inp("end", "", "date")}${inp("endTime", "", "time")}</div></div>
         ${fld("shs-sort", "ลำดับแสดง", `<select id="shs-sort" data-shs="sort"><option value="price"${sh.sort === "price" ? " selected" : ""}>ราคาสูงไปต่ำ</option><option value="row"${sh.sort === "row" ? " selected" : ""}>ตามลำดับในตาราง</option></select>`)}
