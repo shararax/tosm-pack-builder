@@ -1679,9 +1679,11 @@ function validatePack(p, f = curFolder()){
   const name = String(p.name || "").trim(), rnd = p.mode === "random", rs = p.reset || {};
   if (!name) add("name", "err", "ใส่ชื่อแพ็ก (ใช้เป็นชื่อ Bundle และชื่อสินค้าใน Aztek)", true);
   else {
-    const others = (f?.packs || []).filter(x => x !== p && x.id !== p.id);
-    const names = new Set(others.flatMap(x => { const nm = String(x.name || "").trim(); return x.mode === "random" ? [nm, nm + " - Random"] : [nm]; }));
-    if (names.has(name) || (rnd && names.has(name + " - Random"))) add("name", "err", "ชื่อซ้ำกับแพ็กอื่นในโฟลเดอร์นี้ · Aztek จะรวม Bundle ชื่อเดียวกันเป็นอันเดียว");
+    /* compare the names Aztek will see: in an exchange shop the Bundle name carries prefix + place, so the same item twice is fine */
+    const others = (f?.packs || []).filter(x => x !== p && x.id !== p.id && !(isShop(f) && x.hidden));
+    const names = new Set(others.flatMap(x => { const nm = bundleBase(x); return x.mode === "random" ? [nm, nm + " - Random"] : [nm]; }));
+    const bn = bundleBase(p);
+    if (names.has(bn) || (rnd && names.has(bn + " - Random"))) add("name", "err", "ชื่อซ้ำกับแพ็กอื่นในโฟลเดอร์นี้ · Aztek จะรวม Bundle ชื่อเดียวกันเป็นอันเดียว");
     if (name.length > 100) add("name", "warn", `ชื่อยาว ${name.length} ตัวอักษร อาจแสดงไม่ครบบนหน้าร้าน`);
   }
   const price = String(p.price ?? "").trim();
