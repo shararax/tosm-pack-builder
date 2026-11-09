@@ -1175,6 +1175,17 @@ td .cell.v-err{background:var(--bad-soft)}
 .hx-tag{font-size:10.5px;padding:0 6px;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
 .hx-tag.rnd{background:var(--z-set,#15223a);color:var(--z-set-ink,#8fb8ee)}
 .hx-foot{font-size:11.5px;color:var(--muted);margin:0}
+.hx-t tr.hx-row{cursor:pointer}.hx-t tr.hx-row:hover td{background:var(--panel-2)}.hx-t tr.hx-row.open td{background:var(--panel-2);border-bottom-color:transparent;opacity:1}
+.hx-car{display:inline-block;width:12px;color:var(--muted);font-size:10px}
+.hx-t td small{display:block}.hx-t td.num small{color:var(--muted);font-size:10.5px}
+.hx-t tr.hx-in td{background:var(--panel-2);padding:0 6px 10px}
+.hx-pk{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:8px 10px}
+.hx-pk-m{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.hx-pk-g{font-size:11px;color:var(--muted);margin:6px 0 2px;font-weight:600}
+.hx-pk ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.hx-pk li{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.hx-pk li .nm{flex:1;min-width:0}.hx-pk li .q{white-space:nowrap;font-variant-numeric:tabular-nums}.hx-pk li .q small{display:inline;color:var(--muted)}
+.hx-pk li.me .nm{font-weight:600}.hx-pk li em{font-style:normal;font-size:10.5px;padding:0 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink)}
 .hx-sim{flex:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .hx-sim-h{display:flex;width:100%;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--panel-2);border:0;cursor:pointer;text-align:left}
 .hx-sim-h span{flex:1}.hx-sim-h b{font-weight:600}.hx-sim-h small{display:block;color:var(--muted);font-size:11.5px}
@@ -2065,7 +2076,8 @@ const hxMed = a => { if (!a.length) return null; const s = [...a].sort((x, y) =>
 function hxItem(p, itemId){
   const rows = hxPast(p).flatMap(e => { const xs = e.p.items.filter(x => x.itemId === itemId); if (!xs.length) return [];
     const r = calc(e.p), x = xs[0], rnd = e.p.mode === "random" && xs.some(y => !y.fixed);
-    return [{ ...e, amt: xs.reduce((a, y) => a + n(y.amt) * (e.p.mode === "random" && !y.fixed ? n(y.chance) / 100 : 1), 0), rnd, unit: hxUnit(e.p, r, x), r }]; });
+    const amtTxt = xs.map(y => e.p.mode === "random" && !y.fixed ? `${fmt(n(y.amt), 0)}<small>${fmt(n(y.chance), 4)}%</small>` : fmt(n(y.amt), 0)).join(" + ");
+    return [{ ...e, amt: xs.reduce((a, y) => a + n(y.amt) * (e.p.mode === "random" && !y.fixed ? n(y.chance) / 100 : 1), 0), amtTxt, rnd, unit: hxUnit(e.p, r, x), r }]; });
   const u = rows.filter(x => !x.rnd).map(x => x.unit).filter(v => v != null);   // random packs are shown but kept out of the numbers
   const r = calc(p), x = p.items.find(y => y.itemId === itemId), now = x ? hxUnit(p, r, x) : null, mid = hxMed(u);
   const diff = now != null && mid ? now / mid - 1 : null;
@@ -2120,10 +2132,21 @@ function hxItemPane(p){
   return head + `<div class="hx-stats"><div><small>ต่ำสุด</small><b>${hxB(h.min)}</b></div><div><small>ปกติ (ค่ากลาง)</small><b>${hxB(h.mid)}</b></div><div><small>สูงสุด</small><b>${hxB(h.max)}</b></div></div>
     ${verdict}${chart}
     <table class="hx-t"><thead><tr><th>ขายเมื่อ</th><th>แพ็ก</th><th class="r">ชิ้น</th><th class="r">≈ ต่อชิ้น</th><th class="r">ขายได้</th></tr></thead><tbody>
-    ${h.rows.map(e => `<tr${e.unit == null || e.rnd ? ' class="off"' : ""}><td class="nw">${hxDate(e.t)}</td><td>${esc(e.p.name)}${e.rnd ? '<span class="hx-tag rnd">สุ่ม · ไม่นับ</span>' : ""}${e.unit == null ? `<span class="hx-tag">${isSP(e.p) ? "ไม่มีราคา" : "สกุลเงินอื่น"} · ไม่นับ</span>` : ""}<small>${esc(e.f.name)} · ${isSP(e.p) ? "฿" + fmt(n(e.p.price)) : payText(e.p)}</small></td>
-      <td class="r num">${fmt(e.amt, e.rnd ? 2 : 0)}</td><td class="r num">${hxB(e.unit)}</td><td class="r num">${hxSold(e.p)}</td></tr>`).join("")}
+    ${h.rows.map(e => { const open = HX.exp === e.p.id; return `<tr class="hx-row${e.unit == null || e.rnd ? " off" : ""}${open ? " open" : ""}" data-hxexp="${e.p.id}" tabindex="0" aria-expanded="${open}" title="กดเพื่อดูไอเทมทั้งหมดในแพ็กนี้"><td class="nw"><span class="hx-car">${open ? "▾" : "▸"}</span>${hxDate(e.t)}</td><td>${esc(e.p.name)}${e.rnd ? '<span class="hx-tag rnd">สุ่ม · ไม่นับ</span>' : ""}${e.unit == null ? `<span class="hx-tag">${isSP(e.p) ? "ไม่มีราคา" : "สกุลเงินอื่น"} · ไม่นับ</span>` : ""}<small>${esc(e.f.name)} · ${isSP(e.p) ? "฿" + fmt(n(e.p.price)) : payText(e.p)}</small></td>
+      <td class="r num">${e.amtTxt}</td><td class="r num">${hxB(e.unit)}</td><td class="r num">${hxSold(e.p)}</td></tr>${open ? hxPackItems(e) : ""}`; }).join("")}
     </tbody></table>
     <p class="hx-foot">ราคาต่อชิ้น = มูลค่าไอเทมหลังหักส่วนลดของแพ็กนั้น · แพ็กสุ่มแสดงไว้ดู (ชิ้น = จำนวนเฉลี่ยต่อครั้ง) แต่ไม่นับในต่ำสุด / ปกติ / สูงสุด เพราะราคาขึ้นกับดวง</p>`;
+}
+/* the whole content of one past pack, opened under its row in the item history */
+function hxPackItems(e){
+  const q = e.p, rnd = q.mode === "random", r = e.r;
+  const li = x => { const m = BYID.get(x.itemId), me = x.itemId === HX.key;
+    return `<li class="${me ? "me" : ""}">${icon(m?.img, m?.grade, x.name, "ico sm")}<span class="nm">${esc(x.name || "(ไม่มีชื่อ)")}${me ? ' <em>ไอเทมนี้</em>' : ""}</span>
+      <span class="q">×${fmt(n(x.amt), 0)}${rnd ? (x.fixed ? ' <small>แน่นอน</small>' : ` <small>${fmt(n(x.chance), 4)}%</small>`) : ""}</span></li>`; };
+  return `<tr class="hx-in"><td colspan="5"><div class="hx-pk">
+    <div class="hx-pk-m">${rnd ? "Random" : "Fixed"} · ${isSP(q) ? "฿" + fmt(n(q.price)) : payText(q)} · ${rnd ? "EV" : "มูลค่า"} ฿${fmt(r.value)} · ลด ${hxDisc(r)} · Limit ${n(q.limit) || "ไม่จำกัด"}${String(q.soldTx ?? "") !== "" ? ` · กดซื้อ ${fmt(n(q.soldTx), 0)}` : ""}</div>
+    ${rnd && q.items.some(x => x.fixed) ? `<div class="hx-pk-g">ได้แน่นอน</div><ul>${q.items.filter(x => x.fixed).map(li).join("")}</ul><div class="hx-pk-g">ของสุ่ม</div>` : ""}
+    <ul>${q.items.filter(x => !rnd || !x.fixed).map(li).join("")}</ul></div></td></tr>`;
 }
 function hxPackPane(p){
   const s = hxSimilar(p); if (!s.length) return `<p class="hx-none">ยังไม่พบแพ็กเก่าที่มีไอเทมเหมือนกัน</p>`;
@@ -2157,11 +2180,12 @@ function renderHx(){
     <div class="hx-b">${HX.tab === "item" ? hxItemPane(p) : hxPackPane(p)}</div>`;
 }
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-hx],[data-hxopen],[data-hxtab],[data-hxclose],[data-hxcmp],[data-hxuse]"); if (!t) return;
+  const t = e.target.closest("[data-hx],[data-hxopen],[data-hxtab],[data-hxclose],[data-hxcmp],[data-hxuse],[data-hxexp]"); if (!t) return;
   e.preventDefault(); e.stopPropagation();
   if (t.dataset.hx != null) { HX.open = true; HX.tab = "item"; HX.key = t.dataset.hx; }
   else if (t.dataset.hxopen) { HX.open = true; HX.tab = t.dataset.hxopen; HX.cmp = null; }
   else if (t.dataset.hxtab) HX.tab = t.dataset.hxtab;
+  else if (t.dataset.hxexp) HX.exp = HX.exp === t.dataset.hxexp ? null : t.dataset.hxexp;
   else if (t.dataset.hxcmp) HX.cmp = HX.cmp === t.dataset.hxcmp ? "-" : t.dataset.hxcmp;
   else if (t.hasAttribute("data-hxclose")) HX.open = false;
   else if (t.dataset.hxuse) { const [fid, pid] = t.dataset.hxuse.split("|"), q = S.folders.find(f => f.id === fid)?.packs.find(x => x.id === pid), p = active();
@@ -2169,10 +2193,12 @@ document.addEventListener("click", e => {
   renderHx();
 }, true);
 document.addEventListener("change", e => { const t = e.target;
-  if (t.matches("[data-hxkey]")) { HX.key = t.value; renderHx(); }
+  if (t.matches("[data-hxkey]")) { HX.key = t.value; HX.exp = null; renderHx(); }
   else if (t.matches("[data-hxrange]")) { HX.range = t.value; renderHx(); renderRight(); } });
 document.addEventListener("click", e => { if (HX.open && e.target.closest('[role="tab"][id^="tab-"]')) setTimeout(renderHx); });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && HX.open) { HX.open = false; renderHx(); } });
+document.addEventListener("keydown", e => { const row = e.target.closest?.("[data-hxexp]");
+  if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); HX.exp = HX.exp === row.dataset.hxexp ? null : row.dataset.hxexp; renderHx(); $(`[data-hxexp="${row.dataset.hxexp}"]`)?.focus(); return; }
+  if (e.key === "Escape" && HX.open) { HX.open = false; renderHx(); } });
 
 /* ---------- pack tabs + summary ---------- */
 function renderRight(){
