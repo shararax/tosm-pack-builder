@@ -512,7 +512,11 @@ details.dd>summary:hover{color:var(--accent)}
 .bc-disc{grid-column:1/-1;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .bc-disc .bd-b{display:flex;flex-direction:column;gap:3px;min-width:0}
 .bc-disc .bd-b.r{align-items:flex-end;text-align:right}
-.bc-disc .v.val{color:var(--ink)}
+.bc-disc .v.price{color:var(--ink);font-size:38px}
+.bc-disc .v.price small{font:600 14px var(--f-body);color:var(--muted);margin-left:6px}
+.bc-disc .bd-b.r .v{font-size:22px}
+.bc-val{grid-column:1/-1;font-size:12px;color:var(--muted);padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.bc-val b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .bc-disc .v{font:700 28px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .bc-disc .l{font-size:11px;color:var(--muted)}
 .bc-f{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -2545,7 +2549,9 @@ function colStats(p){
   const r = calc(p), rnd = p.mode === "random", dc = discClass(r.disc);
   return { r, dc, disc: !isFinite(r.disc) ? "–" : r.disc < 0 ? "−" + fmt(-r.disc*100,1) + "%" : fmt(r.disc*100,1) + "%",
     label: !isFinite(r.disc) ? "ยังไม่มีมูลค่า" : r.disc < 0 ? "แพงกว่ามูลค่า" : "Total Discount" + (rnd ? " (EV)" : ""),
-    value: "฿" + fmt(Math.round(r.value)) };
+    value: "฿" + fmt(Math.round(r.value)),
+    price: String(p.price ?? "").trim() === "" ? "–" : isSP(p) ? "฿" + fmt(n(p.price), 0) : `${fmt(payAmt(p), 0)}<small>${esc(curShort(payCur(p)))}</small>`,
+    plabel: `ราคาขาย${String(p.price ?? "").trim() === "" ? " · ยังไม่ได้ใส่" : isSP(p) ? " · " + payText(p) : ""}` };
 }
 const itemQ = (p, x) => `×${fmt(n(x.amt),0)}${p.mode === "random" ? (x.fixed ? `<span class="pill">แน่นอน</span>` : `<span class="pill${n(x.chance) > 0 ? "" : " warn"}">${n(x.chance) > 0 ? fmt(n(x.chance),4) + "%" : "ไม่มี %"}</span>`) : ""}`;
 function boardCol(p){
@@ -2579,8 +2585,9 @@ function boardCol(p){
     <div class="bc-s">
       <div class="bc-zh">⚙ ตั้งค่าแพ็ก</div>
       <div class="bc-disc">
-        <span class="bd-b"><span class="v val" data-bstat="${p.id}|value">${st.value}</span><span class="l">${rnd ? "EV ต่อครั้ง" : "มูลค่าต่อครั้ง"}</span></span>
+        <span class="bd-b"><span class="v price" data-bstat="${p.id}|price">${st.price}</span><span class="l" data-bstat="${p.id}|plabel">${st.plabel}</span></span>
         <span class="bd-b r"><span class="v ${st.dc}" data-bstat="${p.id}|disc">${st.disc}</span><span class="l" data-bstat="${p.id}|label">${st.label}</span></span></div>
+      <div class="bc-val">${rnd ? "EV ต่อครั้ง" : "มูลค่าต่อครั้ง"} <b data-bstat="${p.id}|value">${st.value}</b></div>
       <div class="bc-f"><label>${isSP(p) ? "ราคา (THB)" : "มูลค่า (THB)"}</label><input type="number" min="0" step="1" data-bf="${p.id}|price" value="${esc(p.price)}" class="${bcls(d.f.price).trim()}"><span class="sub" data-bstat="${p.id}|sp">${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}</span></div>
       <div class="bc-f"><label>Limit / ID${ri.on ? " / รอบ" : ""}</label><input type="number" min="0" step="1" data-bf="${p.id}|limit" value="${esc(p.limit)}" class="${bcls(d.f.limit).trim()}"><span class="sub">${n(p.limit) > 0 ? "" : "ไม่จำกัด"}</span></div>
       <div class="bc-f"><label>ไอเทม</label><span class="ro">${p.items.length} รายการ</span></div>
@@ -2641,7 +2648,7 @@ function newPackItem(it){
 function updateColStats(pid){
   const p = S.packs.find(x => x.id === pid); if (!p) return; const st = colStats(p);
   const set = (k, v, cls) => { const e = document.querySelector(`[data-bstat="${pid}|${k}"]`); if (e) { e.textContent = v; if (cls != null) e.className = "v " + cls; } };
-  set("disc", st.disc, st.dc); set("label", st.label); set("value", st.value); set("sp", `${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}`);
+  set("disc", st.disc, st.dc); set("label", st.label); set("value", st.value); { const e = document.querySelector(`[data-bstat="${pid}|price"]`); if (e) e.innerHTML = st.price; } set("plabel", st.plabel); set("sp", `${isSP(p) ? "= " : "ขายเป็น "}${payText(p)}`);
   const w = document.querySelector(`[data-bstat="${pid}|warn"]`); if (w) w.textContent = `โอกาสรวม ${fmt(st.r.chanceSum,4)}% (ควรเป็น 100%)`;
 }
 const findItem = (pid, u) => { const p = S.packs.find(x => x.id === pid); return { p, x: p?.items.find(i => i.uid === u) }; };
