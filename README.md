@@ -59,7 +59,7 @@ select value from private.app_config where key = 'app_client_key';
 |---|---|
 | `SUPABASE_URL` | `https://slmxqrjttummvgfhmfnd.supabase.co` |
 | `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_ksgczLdB9vYu6Q-QISTPkg_p40z-uER` |
-| `APP_CLIENT_KEY` | ค่าจากขั้นที่ 4 |
+| `APP_CLIENT_KEY` | ไม่ต้องใส่แล้ว (หน้าเว็บรับรหัสนี้จากฐานข้อมูลหลังล็อกอิน) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → **Secret key** (`sb_secret_…`) |
 | `LOGIN_DOMAIN` | ไม่ต้องใส่ (ค่าเริ่มต้น `tosm.local`) |
 
@@ -125,3 +125,16 @@ select value from private.app_config where key = 'app_client_key';
 ## อัปเดตหน้าเว็บครั้งต่อไป
 
 แทนที่ `index.html` ด้วยไฟล์ใหม่ แล้ว push/redeploy · ถ้า `schema.sql` มีการแก้ ให้รันใน SQL Editor ซ้ำได้เลย (ข้อมูลเดิมไม่หาย)
+
+## สิ่งที่หน้าเข้าสู่ระบบเห็นได้ (ก่อนล็อกอิน)
+
+มีแค่ `supabaseUrl`, publishable key และ `loginDomain` ใน `/config.js` ซึ่งจำเป็นสำหรับการล็อกอินเอง
+และเปิดอะไรไม่ได้ถ้าไม่มีบัญชี (RLS ทุกตาราง, `anon` ไม่มีสิทธิ์ใด ๆ)
+
+ส่วนนี้ส่งให้ **หลังล็อกอินเท่านั้น** ผ่าน `public.client_config()` (เฉพาะบัญชีที่เปิดใช้งาน):
+- รหัส App Client (`private.app_config.app_client_key`)
+- Apps Script URL ของรายการไอเทม (`private.app_config.items_api`, รหัส `items_key` ถ้าตั้ง ACCESS_KEY ในสคริปต์)
+
+เปลี่ยน URL ของรายการไอเทม: `update private.app_config set value = 'https://script.google.com/macros/s/…/exec' where key = 'items_api';`
+
+ตอนออกจากระบบ เบราว์เซอร์ไม่เก็บข้อมูลโฟลเดอร์หรือรายการไอเทมไว้

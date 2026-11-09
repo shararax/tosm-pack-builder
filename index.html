@@ -1309,7 +1309,12 @@ td .cell.v-err{background:var(--bad-soft)}
 (() => {
 "use strict";
 const LS_STATE = "tosm-pack-builder:v1", LS_ITEMS = "tosm-pack-builder:items";
-const DEFAULT_API = "https://script.google.com/macros/s/AKfycbxFC2r7OuZwK30-r8eoAOUOI8ieeCZScCWEqueJdrTVZ9P7rsvR_uP8m8vhVG2_oVlb/exec";
+/* no item-list URL in the page source: on the Vercel + Supabase site it arrives after login (public.client_config); elsewhere it is typed in Settings */
+const DEFAULT_API = "";
+/* Vercel + Supabase site: nothing about the team's data stays in this browser while logged out —
+   no saved folders, no cached item list. Everything is loaded from the database after login. */
+const SB_MODE = !!(window.TOSM_CONFIG?.supabaseUrl && window.TOSM_CONFIG?.supabaseKey);
+const ITEMS_SRC = { api:"", key:"" };   // Supabase site: filled from public.client_config() after login
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const n = v => { const x = parseFloat(String(v ?? "").replace(/,/g, "")); return isFinite(x) ? x : 0; };
@@ -1317,7 +1322,13 @@ const fmt = (v, d=2) => isFinite(v) ? v.toLocaleString("en-US",{minimumFractionD
 const pct = v => isFinite(v) ? (v*100).toFixed(2) + "%" : "–";
 const uid = () => Math.random().toString(36).slice(2, 9);
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const lsSet = (k, v) => { if (SB_MODE && (k === LS_STATE || k === LS_ITEMS)) return; try { localStorage.setItem(k, v); } catch {} };
+if (SB_MODE) try {
+  const LS_BK = "tosm-pack-builder:v1:before-db", st = localStorage.getItem(LS_STATE);
+  if (st && localStorage.getItem(LS_BK) == null && !localStorage.getItem("tosm-pack-builder:migrated")) localStorage.setItem(LS_BK, st);   // keep old local data once for "ย้ายขึ้นระบบ"
+  localStorage.removeItem(LS_STATE); localStorage.removeItem(LS_ITEMS);
+  if (localStorage.getItem("tosm-pack-builder:migrated")) localStorage.removeItem(LS_BK);
+} catch {}
 let CLOUD = null;   // shared-data sync, set at boot when the page runs inside the Apps Script web app
 
 /* ---------- state ---------- */
@@ -1516,11 +1527,11 @@ async function fetchItems(){
     try { const cnt = setItems(await CLOUD.call("api_items")); setStatus(`ไอเทม ${cnt.toLocaleString()} รายการ · อัปเดต ${hhmm(new Date())}`); }
     catch (e) { failLoad("โหลดไอเทมไม่ได้: " + (e?.message || e)); }
     return; }
-  const api = S.settings.api.trim();
+  const api = String(SB_MODE ? ITEMS_SRC.api : S.settings.api).trim(), akey = SB_MODE ? ITEMS_SRC.key : S.settings.key;
   if (!api) { setStatus(ITEMS.length ? `ไอเทม ${ITEMS.length.toLocaleString()} รายการ (ที่บันทึกไว้) · ยังไม่ได้ใส่ Apps Script URL` : "ยังไม่ได้ใส่ Apps Script URL · กด ตั้งค่า", true); return; }
   if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(api)) { setStatus("Apps Script URL ไม่ถูกต้อง · ต้องขึ้นต้นด้วย https://script.google.com/", true); return; }
   setStatus("กำลังโหลดไอเทมจาก Apps Script…");
-  const url = api + (api.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(S.settings.key) + "&t=" + Date.now();
+  const url = api + (api.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(akey) + "&t=" + Date.now();
   let res, text;
   try { res = await fetch(url, { redirect:"follow" }); text = await res.text(); }
   catch { return failLoad("เชื่อมต่อ Apps Script ไม่ได้ · ตรวจว่า Deploy เป็น Web app, Who has access = Anyone และ URL ลงท้าย /exec"); }
@@ -3388,7 +3399,7 @@ function openSettings(){
   $("#s-api").value = S.settings.api; $("#s-key").value = S.settings.key;
   $("#s-az").innerHTML = DEFAULT_CATS.map((c, i) => `<div class="fld"><label for="s-az-${i}">${esc(c)}</label><input id="s-az-${i}" data-azmap="${esc(c)}" value="${esc(S.azMap[c] || "")}"></div>`).join("");
   $("#s-proj-wrap").hidden = !curFolder();
-  $("#s-api-wrap").hidden = !!CLOUD?.call; $("#s-me-wrap").hidden = !CLOUD?.setMe; $("#s-me").value = CLOUD?.setMe ? CLOUD.me() : "";
+  $("#s-api-wrap").hidden = !!CLOUD?.call || SB_MODE; $("#s-me-wrap").hidden = !CLOUD?.setMe; $("#s-me").value = CLOUD?.setMe ? CLOUD.me() : "";
   $("#s-acct").hidden = !CLOUD?.account; if (CLOUD?.account) CLOUD.account($("#s-acct"));
   $("#settings-modal").hidden = false; (curFolder() ? $("#s-proj") : $("#s-rate")).focus();
 }
@@ -4307,6 +4318,7 @@ function makeSupa(cfg){
   const meName = () => me ? me.display_name || me.username : "";
   const canEdit = () => !!me && me.role !== "viewer";
   const P = q => q.then(r => { if (r.error) throw r.error; return r.data; });
+  let CK = "";   // App Client key: handed out by the database only after login (never in /config.js)
 
   /* ---- pack ⇄ row ---- */
   const PACK_KEYS = new Set(["id","name","mode","price","pos","limit","start","startTime","end","endTime","reset","azCat","types","bonus","idea","image","sold","items"]);
@@ -4517,7 +4529,7 @@ function makeSupa(cfg){
   function releaseNow(){
     if (!held || !token) return;
     try { fetch(cfg.supabaseUrl.replace(/\/$/, "") + "/rest/v1/rpc/release_lock", { method:"POST", keepalive:true,
-      headers:{ "Content-Type":"application/json", apikey:cfg.supabaseKey, Authorization:"Bearer " + token, "x-app-client":cfg.appClientKey || "" },
+      headers:{ "Content-Type":"application/json", apikey:cfg.supabaseKey, Authorization:"Bearer " + token, "x-app-client":CK },
       body:JSON.stringify({ p_resource:held }) }).catch(() => {}); } catch {}
     held = null;
   }
@@ -4608,7 +4620,7 @@ function makeSupa(cfg){
     try { if (!window.supabase?.createClient) await loadScript(SB_JS); }
     catch (e) { cover(`<div class="sb-card sb-wait">${esc(e.message)} · ตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า</div>`); return; }
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey, {
-      global:{ headers:{ "x-app-client":cfg.appClientKey || "" } },
+      global:{ fetch:(url, o = {}) => { const h = new Headers(o.headers || {}); if (CK) h.set("x-app-client", CK); return fetch(url, { ...o, headers:h }); } },
       auth:{ persistSession:true, autoRefreshToken:true, storageKey:"tosm-pack-builder:auth" } });
     sb.auth.onAuthStateChange((ev, session) => { token = session?.access_token || ""; if (ev === "SIGNED_OUT" && ready) { ready = false; location.reload(); } });
     const { data:{ session } } = await sb.auth.getSession();
@@ -4622,14 +4634,16 @@ function makeSupa(cfg){
       const prof = await P(sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle());
       if (!prof || !prof.active) { await sb.auth.signOut(); return showLogin("บัญชีนี้ยังไม่ได้เปิดใช้งาน · ติดต่อผู้ดูแล"); }
       me = prof;
+      const cc = await P(sb.rpc("client_config")) || {};
+      CK = cc.appClientKey || ""; ITEMS_SRC.api = cc.itemsApi || ""; ITEMS_SRC.key = cc.itemsKey || "";
       /* keep what this browser had before the database, once, so it can be moved up later */
-      if (lsGet(LS_BACKUP) == null) { const before = lsGet(LS_STATE); lsSet(LS_BACKUP, before || ""); }
+      if (lsGet(LS_BACKUP) == null && lsGet(LS_STATE)) lsSet(LS_BACKUP, lsGet(LS_STATE));
       const rows = await loadRows();
       if (!rows.some(r => r.kind === "folder" && r.id === S.folderId)) S.folderId = null;
       S.folders = []; S.memo = {}; last.clear();
       applyRows(rows, true, last, snapshot);
       ready = true; lastOk = new Date();
-      refresh(); uncover(); guards(); subscribe(); schedule(); lockTick();
+      refresh(); uncover(); guards(); subscribe(); schedule(); lockTick(); fetchItems();
       const bk = backupFolders();
       if (canEdit() && bk.length && !lsGet(LS_MIGRATED)) setTimeout(() => toast(`มีข้อมูลเดิมในเครื่องนี้ ${bk.length} โฟลเดอร์ · ย้ายขึ้นระบบได้ที่ ตั้งค่า`), 900);
     } catch (e) {
@@ -4758,7 +4772,7 @@ showView("home");
 CLOUD?.start();
 if (S.dirty) markDirty();
 $("#btn-save").title = "บันทึกโปรโมชันเป็นไฟล์ .json เพื่อเปิดต่อในเครื่องอื่นหรือส่งให้คนอื่น";
-fetchItems();
+if (!SB_MODE) fetchItems();      // Supabase site: loads items after login
 if (!CLOUD && !S.settings.api && !ITEMS.length) setTimeout(openSettings, 300);
 })();
 </script>
