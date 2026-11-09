@@ -2176,7 +2176,7 @@ function renderHx(){
   el.hidden = false;
   el.innerHTML = `<div class="hx-h"><h2>ประวัติราคา <small>${esc(p.name)}</small></h2><button class="hx-x" data-hxclose aria-label="ปิด">×</button></div>
     <div class="hx-seg" role="tablist"><button role="tab" aria-selected="${HX.tab === "item"}" data-hxtab="item">ไอเทมนี้เคยขาย</button><button role="tab" aria-selected="${HX.tab === "pack"}" data-hxtab="pack">แพ็กที่คล้ายกัน</button></div>
-    <div class="hx-f"><select data-hxrange aria-label="ช่วงเวลา"><option value="6"${HX.range === "6" ? " selected" : ""}>6 เดือนก่อนแพ็กนี้</option><option value="12"${HX.range === "12" ? " selected" : ""}>12 เดือนก่อนแพ็กนี้</option><option value="all"${HX.range === "all" ? " selected" : ""}>ทั้งหมด</option></select></div>
+    <div class="hx-f"><select data-hxrange aria-label="ช่วงเวลา">${[["1","1 เดือนก่อนแพ็กนี้"],["3","3 เดือนก่อนแพ็กนี้"],["6","6 เดือนก่อนแพ็กนี้"],["12","12 เดือนก่อนแพ็กนี้"],["all","ทั้งหมด"]].map(([v, t]) => `<option value="${v}"${HX.range === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
     <div class="hx-b">${HX.tab === "item" ? hxItemPane(p) : hxPackPane(p)}</div>`;
 }
 document.addEventListener("click", e => {
