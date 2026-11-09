@@ -1131,6 +1131,56 @@ td .cell.v-err{background:var(--bad-soft)}
 .bcol.is-locked{outline:2px solid var(--warn);outline-offset:-2px}
 .bcol[data-lock]::before{content:attr(data-lock);display:block;margin:-2px 0 6px;padding:4px 8px;border-radius:6px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600}
 [data-ro]{cursor:not-allowed}
+/* price history */
+.hx-chip{display:inline-flex;gap:5px;align-items:center;margin-top:3px;border:1px solid var(--line);background:var(--panel-2);border-radius:999px;padding:1px 8px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.hx-chip:hover{border-color:var(--accent);color:var(--ink)}
+.hx-chip i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.hx-chip.up i{background:var(--warn)}.hx-chip.ok i,.hx-chip.down i{background:var(--good)}
+.hx-chip b{font-weight:600;color:var(--ink)}.hx-chip.none{opacity:.7}
+.nmc .t .hx-chip{display:inline-flex}
+.hx-card{border:1px solid var(--line);border-left:4px solid var(--z-set-ink,#2a5d9c);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--panel-2)}
+.hx-top b{font-weight:600;display:block}.hx-top small{color:var(--muted);font-size:12px}
+.hx-kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}.hx-kv span:nth-child(odd){color:var(--muted)}.hx-kv span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums}
+.hx-kv em,.hx-t em{font-style:normal;font-size:11.5px;color:var(--muted);margin-left:4px}
+.hx-card em.up,.hx-t .up{color:var(--warn)}.hx-card em.down,.hx-t .down{color:var(--good)}
+.hx-more{align-self:stretch}.hx-none{margin:0;color:var(--muted);font-size:13px}
+.hx-hint .lnk{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;font:inherit;font-weight:600;text-decoration:underline}
+.hx-hint{display:block}
+.hx{position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);z-index:60;background:var(--panel);border-left:1px solid var(--line);box-shadow:-16px 0 40px rgba(0,0,0,.35);display:flex;flex-direction:column}
+.hx-h{display:flex;align-items:flex-start;gap:8px;padding:14px 16px 8px}
+.hx-h h2{margin:0;flex:1;font:700 17px var(--f-display)}.hx-h h2 small{display:block;font:400 12px var(--f-body);color:var(--muted)}
+.hx-x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px}
+.hx-seg{display:flex;border-bottom:1px solid var(--line);padding:0 16px}
+.hx-seg button{flex:1;border:0;background:none;padding:8px 4px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-weight:500}
+.hx-seg button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.hx-f{display:flex;gap:10px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.hx-f select{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-size:12.5px}
+.hx-b{flex:1;overflow:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:12px}
+.hx-who{display:flex;gap:10px;align-items:center}.hx-who small{display:block;color:var(--muted);font-size:11.5px}
+.hx-sel{font-weight:600;background:transparent;border:1px solid var(--line);border-radius:6px;padding:2px 4px;max-width:330px}
+.hx-b>*{flex:none}
+.hx-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hx-stats div{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.hx-stats small{display:block;color:var(--muted);font-size:11px}.hx-stats b{font:600 18px var(--f-display);font-variant-numeric:tabular-nums}
+.hx-v{border-radius:8px;padding:8px 12px;font-size:13px;border-left:4px solid var(--good);background:var(--good-soft)}
+.hx-v.up{border-color:var(--warn);background:var(--warn-soft)}.hx-v b{font-weight:600}
+.hx-chart{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--muted)}
+.hx-chart small{font-size:11px}.hx-chart circle{fill:var(--muted)}.hx-chart circle.rnd{fill:var(--z-set-ink,#8fb8ee)}.hx-chart circle.now{fill:var(--accent)}
+.hx-chart text.now{fill:var(--accent);font-size:11px}
+.hx-t{width:100%;border-collapse:collapse;font-size:12.5px}
+.hx-t th{font-size:11.5px;color:var(--muted);font-weight:500;text-align:left;padding:5px;border-bottom:1px solid var(--line)}
+.hx-t td{padding:6px 5px;border-bottom:1px solid var(--line);vertical-align:top}.hx-t .r{text-align:right}.hx-t .nw{white-space:nowrap}
+.hx-t td small{display:block;color:var(--muted);font-size:11px}.hx-t tr.off td{opacity:.55}
+.hx-t td.hx-sub{color:var(--muted);font-size:11.5px;padding-top:10px}
+.hx-tag{font-size:10.5px;padding:0 6px;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:4px;white-space:nowrap}
+.hx-tag.rnd{background:var(--z-set,#15223a);color:var(--z-set-ink,#8fb8ee)}
+.hx-foot{font-size:11.5px;color:var(--muted);margin:0}
+.hx-sim{flex:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hx-sim-h{display:flex;width:100%;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--panel-2);border:0;cursor:pointer;text-align:left}
+.hx-sim-h span{flex:1}.hx-sim-h b{font-weight:600}.hx-sim-h small{display:block;color:var(--muted);font-size:11.5px}
+.hx-sim-h em{font:600 11.5px var(--f-mono);font-style:normal;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);white-space:nowrap}
+.hx-sim.open .hx-t{margin:4px 10px 0;width:calc(100% - 20px)}
+.hx-acts{padding:8px 10px;display:flex;justify-content:flex-end}
 </style>
 <style>
 /* page backgrounds follow the theme: daylight ruins in light mode, night cherry blossoms in dark mode */
@@ -1814,7 +1864,7 @@ function itemCell(x, i){
       <input class="cell w" type="text" placeholder="ชื่อไอเทม เช่น Gold" data-i="${i}" data-k="name" data-v="item:${x.uid}:name" value="${esc(x.name)}" aria-label="ชื่อไอเทม">
       <input class="cell w mono" type="text" placeholder="Item ID เช่น Gold_Cur" data-i="${i}" data-k="itemId" data-v="item:${x.uid}:itemId" value="${esc(x.itemId)}" aria-label="Item ID">
       <small>ไอเทมนอกลิสต์</small></div></div>`;
-  return `<div class="nmc" data-v="item:${x.uid}:itemId">${icon(m?.img, m?.grade, x.name, "ico sm")}<span class="t">${esc(x.name)}<small>${esc(x.itemId)}${m?.trade==="TRUE" ? " · ซื้อขายได้" : ""}${!m && ITEMS.length ? " · ไม่พบใน Sheet" : ""}</small></span></div>`;
+  return `<div class="nmc" data-v="item:${x.uid}:itemId">${icon(m?.img, m?.grade, x.name, "ico sm")}<span class="t">${esc(x.name)}<small>${esc(x.itemId)}${m?.trade==="TRUE" ? " · ซื้อขายได้" : ""}${!m && ITEMS.length ? " · ไม่พบใน Sheet" : ""}</small>${active() ? hxChip(active(), x) : ""}</span></div>`;
 }
 function resetSchedHTML(p){
   const ri = resetInfo(p);
@@ -1867,7 +1917,7 @@ function renderEditor(){
           + `<option value="__custom"${!inList || p._curCustom ? " selected" : ""}>กรอกเอง…</option>`; })()}</select>
       ${!PAY_CURS.includes(payCur(p)) || p._curCustom ? `<input id="p-curc" data-f="currency" value="${esc(p.currency || "")}" placeholder="ชื่อสกุลเงินตามใน Aztek" aria-label="ชื่อสกุลเงิน (กรอกเอง)">` : ""}
       <span class="hint">ต้องตรงกับชื่อใน Aztek</span>${vm("cur")}</div>
-    ${isSP(p) ? `<div class="fld"><label for="p-price">ราคาขาย (THB)${req("price")}</label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint" id="p-sp">= ${payText(p)}</span>${vm("price")}</div>`
+    ${isSP(p) ? `<div class="fld"><label for="p-price">ราคาขาย (THB)${req("price")}</label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint" id="p-sp">= ${payText(p)}</span>${hxPriceHint(p)}${vm("price")}</div>`
       : `<div class="fld"><label for="p-curprice">ราคา (${esc(curLabel(p))})<span class="req" aria-hidden="true">*</span></label><input id="p-curprice" type="number" min="0" step="1" data-f="curPrice" ${va("curPrice")} aria-required="true" value="${esc(p.curPrice ?? "")}">${vm("curPrice")}</div>
     <div class="fld"><label for="p-price">มูลค่าเทียบเป็นบาท <span class="opt-l">ไม่บังคับ</span></label><input id="p-price" type="number" min="0" step="1" data-f="price" ${va("price")} value="${esc(p.price)}"><span class="hint">ใช้คำนวณความคุ้ม และ GSP / EXP</span>${vm("price")}</div>`}
     <div class="fld wide2"><span class="lbl">โบนัสเมื่อซื้อ</span>
@@ -1999,6 +2049,131 @@ function updateComputed(){
   paintIssues();
 }
 
+/* ---------- price history: compare a pack with what was sold before ----------
+   source = every pack in the tool whose sale started before this pack (any folder, not hidden, not exchange shops).
+   "price per piece" = TP/piece × rate × (price ÷ pack value) — the item's THB value after the pack's discount,
+   so packs with different amounts or other items can still be compared. Seed Point packs only count toward the numbers. */
+const HX = { open:false, tab:"item", key:"", range:"12" };
+const hxStart = p => toDT(p.start, p.startTime || "00:00");
+function hxPast(p){
+  const t0 = hxStart(p) || new Date(8.64e15), from = HX.range === "all" ? null : new Date(t0.getTime() - (+HX.range) * 30.44 * 864e5);
+  return S.folders.filter(f => !isShop(f)).flatMap(f => f.packs.filter(q => q !== p && q.id !== p.id && !q.hidden && q.items.length).map(q => ({ f, p:q, t:hxStart(q) })))
+    .filter(e => e.t && e.t < t0 && (!from || e.t >= from)).sort((a, b) => b.t - a.t);
+}
+const hxUnit = (p, r, x) => isSP(p) && r.value > 0 && n(p.price) > 0 ? n(x.tp) * r.rate * n(p.price) / r.value : null;
+const hxMed = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+function hxItem(p, itemId){
+  const rows = hxPast(p).flatMap(e => { const xs = e.p.items.filter(x => x.itemId === itemId); if (!xs.length) return [];
+    const r = calc(e.p), x = xs[0], rnd = e.p.mode === "random" && xs.some(y => !y.fixed);
+    return [{ ...e, amt: xs.reduce((a, y) => a + n(y.amt) * (e.p.mode === "random" && !y.fixed ? n(y.chance) / 100 : 1), 0), rnd, unit: hxUnit(e.p, r, x), r }]; });
+  const u = rows.filter(x => !x.rnd).map(x => x.unit).filter(v => v != null);   // random packs are shown but kept out of the numbers
+  const r = calc(p), x = p.items.find(y => y.itemId === itemId), now = x ? hxUnit(p, r, x) : null, mid = hxMed(u);
+  const diff = now != null && mid ? now / mid - 1 : null;
+  return { rows, n: rows.length, min: u.length ? Math.min(...u) : null, mid, max: u.length ? Math.max(...u) : null, now, diff,
+    lvl: diff == null ? "" : diff > .1 ? "up" : diff < -.1 ? "down" : "ok" };
+}
+function hxSimilar(p){
+  const mine = new Set(p.items.map(x => x.itemId).filter(Boolean)); if (!mine.size) return [];
+  return hxPast(p).map(e => { const theirs = new Set(e.p.items.map(x => x.itemId)); const same = [...mine].filter(k => theirs.has(k)).length;
+    return { ...e, same, of: mine.size, r: calc(e.p) }; }).filter(e => e.same > 0)
+    .sort((a, b) => (b.same - a.same) || (b.t - a.t)).slice(0, 6);
+}
+const hxB = v => v == null ? "–" : "฿" + fmt(v, v < 10 ? 2 : v < 100 ? 1 : 0);
+const hxDate = t => t ? t.toLocaleDateString("th-TH-u-ca-gregory", { day:"numeric", month:"short", year:"2-digit" }) : "–";
+const hxSold = q => String(q.sold ?? "") === "" ? "–" : fmt(n(q.sold), 0);
+const hxDisc = r => !isFinite(r.disc) ? "–" : fmt(r.disc * 100, 1) + "%";
+function hxChip(p, x){
+  if (!x.itemId || isCustom(x)) return "";
+  const h = hxItem(p, x.itemId);
+  if (!h.n) return `<button class="hx-chip none" data-hx="${esc(x.itemId)}">ยังไม่เคยขาย</button>`;
+  return `<button class="hx-chip ${h.lvl}" data-hx="${esc(x.itemId)}" title="ดูประวัติราคา"><i></i><b>เคยขาย ${h.n} ครั้ง</b>${h.mid != null ? ` · ปกติ ${hxB(h.mid)}/ชิ้น` : ""}</button>`;
+}
+function hxCard(p){
+  const s = hxSimilar(p), top = s[0];
+  if (!top) return `<section class="hx-card"><h2>เทียบกับที่เคยขาย</h2><p class="hx-none">ยังไม่พบแพ็กเก่าที่มีไอเทมเหมือนกัน</p></section>`;
+  const r = calc(p), dp = n(p.price) - n(top.p.price);
+  return `<section class="hx-card"><h2>เทียบกับที่เคยขาย</h2>
+    <div class="hx-top"><b>${esc(top.p.name)}</b><small>${esc(top.f.name)} · ${hxDate(top.t)} · ไอเทมเหมือนกัน ${top.same}/${top.of}</small></div>
+    <div class="hx-kv"><span>ราคา</span><span>฿${fmt(n(top.p.price))}${isSP(p) && n(p.price) ? ` <em class="${dp > 0 ? "up" : dp < 0 ? "down" : ""}">${dp > 0 ? "แพ็กนี้ +" : dp < 0 ? "แพ็กนี้ −" : "เท่ากัน"}${dp ? "฿" + fmt(Math.abs(dp)) : ""}</em>` : ""}</span>
+      <span>ส่วนลด</span><span>${hxDisc(top.r)}${isFinite(r.disc) ? ` <em>แพ็กนี้ ${hxDisc(r)}</em>` : ""}</span>
+      <span>Limit</span><span>${n(top.p.limit) || "ไม่จำกัด"}</span>
+      <span>ขายได้</span><span>${hxSold(top.p)}${String(top.p.soldTx ?? "") !== "" ? ` <em>กดซื้อ ${fmt(n(top.p.soldTx), 0)}</em>` : ""}</span></div>
+    <button class="btn hx-more" data-hxopen="pack">เทียบละเอียด และแพ็กอื่น ๆ (${s.length}) →</button></section>`;
+}
+function hxPriceHint(p){
+  const top = hxSimilar(p)[0]; if (!top || !isSP(top.p)) return "";
+  return `<span class="hint hx-hint">แพ็กคล้ายกันล่าสุด “${esc(top.p.name)}” ขาย ฿${fmt(n(top.p.price))} · ขายได้ ${hxSold(top.p)} <button class="lnk" data-hxopen="pack">เทียบ</button></span>`;
+}
+function hxItemPane(p){
+  const x = p.items.find(y => y.itemId === HX.key) || p.items.find(y => y.itemId && !isCustom(y)); if (!x) return `<p class="hx-none">ยังไม่มีไอเทมในแพ็ก</p>`;
+  HX.key = x.itemId; const m = BYID.get(x.itemId), h = hxItem(p, x.itemId);
+  const pick = `<select class="hx-sel" data-hxkey aria-label="เลือกไอเทม">${[...new Map(p.items.filter(y => y.itemId && !isCustom(y)).map(y => [y.itemId, y])).values()].map(y => `<option value="${esc(y.itemId)}"${y.itemId === HX.key ? " selected" : ""}>${esc(y.name)}</option>`).join("")}</select>`;
+  const head = `<div class="hx-who">${icon(m?.img, m?.grade, x.name, "ico sm")}<div>${pick}<small>${esc(x.itemId)} · TP ${fmt(n(x.tp))}/ชิ้น</small></div></div>`;
+  if (!h.n) return head + `<p class="hx-none">ยังไม่เคยอยู่ในแพ็กไหนในช่วงเวลานี้ · ลองเปลี่ยนเป็น "ทั้งหมด"</p>`;
+  const verdict = h.now == null ? "" : `<div class="hx-v ${h.lvl}">แพ็กนี้ ≈ <b>${hxB(h.now)}/ชิ้น</b> · ${h.lvl === "up" ? `<b>แพงกว่าปกติ ${fmt(h.diff * 100, 0)}%</b>` : h.lvl === "down" ? `<b>ถูกกว่าปกติ ${fmt(-h.diff * 100, 0)}%</b>` : `อยู่ในช่วงที่เคยขาย (${h.diff >= 0 ? "+" : "−"}${fmt(Math.abs(h.diff) * 100, 0)}%)`}</div>`;
+  const pts = h.rows.filter(e => e.unit != null && !e.rnd).slice().reverse(), W = 380, H = 104, P = 14;
+  const hi = Math.max(...pts.map(e => e.unit), h.now || 0) * 1.15 || 1, X = i => P + i * (W - 2 * P) / Math.max(1, pts.length), Y = v => H - P - v / hi * (H - 2 * P);
+  const chart = pts.length ? `<div class="hx-chart"><small>ราคาต่อชิ้นแต่ละครั้ง (เก่า → ใหม่) · เส้นประ = ปกติ</small><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="กราฟราคาต่อชิ้นที่เคยขาย">
+    ${h.mid != null ? `<line x1="${P}" x2="${W - P}" y1="${Y(h.mid)}" y2="${Y(h.mid)}" stroke="currentColor" stroke-dasharray="4 4" opacity=".45"/>` : ""}
+    ${pts.map((e, i) => `<circle cx="${X(i)}" cy="${Y(e.unit)}" r="4.5" class="${e.rnd ? "rnd" : ""}"><title>${hxDate(e.t)} · ${esc(e.p.name)} · ${hxB(e.unit)}/ชิ้น</title></circle>`).join("")}
+    ${h.now != null ? `<circle cx="${X(pts.length)}" cy="${Y(h.now)}" r="6" class="now"/><text x="${X(pts.length) - 9}" y="${Math.max(12, Y(h.now) - 9)}" text-anchor="end" class="now">แพ็กนี้ ${hxB(h.now)}</text>` : ""}</svg></div>` : "";
+  return head + `<div class="hx-stats"><div><small>ต่ำสุด</small><b>${hxB(h.min)}</b></div><div><small>ปกติ (ค่ากลาง)</small><b>${hxB(h.mid)}</b></div><div><small>สูงสุด</small><b>${hxB(h.max)}</b></div></div>
+    ${verdict}${chart}
+    <table class="hx-t"><thead><tr><th>ขายเมื่อ</th><th>แพ็ก</th><th class="r">ชิ้น</th><th class="r">≈ ต่อชิ้น</th><th class="r">ขายได้</th></tr></thead><tbody>
+    ${h.rows.map(e => `<tr${e.unit == null || e.rnd ? ' class="off"' : ""}><td class="nw">${hxDate(e.t)}</td><td>${esc(e.p.name)}${e.rnd ? '<span class="hx-tag rnd">สุ่ม · ไม่นับ</span>' : ""}${e.unit == null ? `<span class="hx-tag">${isSP(e.p) ? "ไม่มีราคา" : "สกุลเงินอื่น"} · ไม่นับ</span>` : ""}<small>${esc(e.f.name)} · ${isSP(e.p) ? "฿" + fmt(n(e.p.price)) : payText(e.p)}</small></td>
+      <td class="r num">${fmt(e.amt, e.rnd ? 2 : 0)}</td><td class="r num">${hxB(e.unit)}</td><td class="r num">${hxSold(e.p)}</td></tr>`).join("")}
+    </tbody></table>
+    <p class="hx-foot">ราคาต่อชิ้น = มูลค่าไอเทมหลังหักส่วนลดของแพ็กนั้น · แพ็กสุ่มแสดงไว้ดู (ชิ้น = จำนวนเฉลี่ยต่อครั้ง) แต่ไม่นับในต่ำสุด / ปกติ / สูงสุด เพราะราคาขึ้นกับดวง</p>`;
+}
+function hxPackPane(p){
+  const s = hxSimilar(p); if (!s.length) return `<p class="hx-none">ยังไม่พบแพ็กเก่าที่มีไอเทมเหมือนกัน</p>`;
+  const r = calc(p);
+  const cmp = e => { const ids = [...new Set([...p.items, ...e.p.items].map(x => x.itemId))];
+    const amt = (q, k) => q.items.filter(x => x.itemId === k).reduce((a, x) => a + n(x.amt), 0), nm = k => ([...p.items, ...e.p.items].find(x => x.itemId === k) || {}).name || k;
+    const row = (l, a, b, d = "") => `<tr><td>${l}</td><td class="r num">${a}</td><td class="r num">${b}</td><td class="r num">${d}</td></tr>`;
+    const dP = n(p.price) - n(e.p.price);
+    return `<table class="hx-t cmp"><thead><tr><th></th><th class="r">แพ็กนี้</th><th class="r">ครั้งก่อน</th><th class="r">ต่าง</th></tr></thead><tbody>
+      ${row("ราคา", "฿" + fmt(n(p.price)), "฿" + fmt(n(e.p.price)), dP ? `<span class="${dP > 0 ? "up" : "down"}">${dP > 0 ? "+" : "−"}฿${fmt(Math.abs(dP))}</span>` : "=")}
+      ${row(p.mode === "random" ? "มูลค่า (EV)" : "มูลค่ารวม", "฿" + fmt(r.value), "฿" + fmt(e.r.value))}
+      ${row("ส่วนลด", hxDisc(r), hxDisc(e.r))}
+      ${row("Limit", n(p.limit) || "∞", n(e.p.limit) || "∞")}
+      ${row("ขายได้", "", hxSold(e.p))}
+      <tr><td colspan="4" class="hx-sub">ไอเทม</td></tr>
+      ${ids.map(k => { const a = amt(p, k), b = amt(e.p, k); return row(esc(nm(k)), a || "–", b || "–", !b ? '<span class="down">เพิ่ม</span>' : !a ? '<span class="up">ตัดออก</span>' : a === b ? "=" : (a > b ? "+" : "−") + fmt(Math.abs(a - b))); }).join("")}
+    </tbody></table>`; };
+  return `<p class="hx-foot" style="margin:0">เรียงตามจำนวนไอเทมที่เหมือนกับแพ็กนี้ แล้วตามวันที่ล่าสุด · กดเพื่อเทียบ</p>
+    ${s.map((e, i) => { const open = HX.cmp ? HX.cmp === e.p.id : i === 0;
+      return `<div class="hx-sim${open ? " open" : ""}"><button class="hx-sim-h" data-hxcmp="${e.p.id}"><span><b>${esc(e.p.name)}</b><small>${esc(e.f.name)} · ${hxDate(e.t)} · ฿${fmt(n(e.p.price))} · ลด ${hxDisc(e.r)} · ขายได้ ${hxSold(e.p)}</small></span><em>เหมือน ${e.same}/${e.of}</em></button>
+      ${open ? cmp(e) + (isSP(p) && isSP(e.p) ? `<div class="hx-acts"><button class="btn pri" data-hxuse="${e.f.id}|${e.p.id}">ใช้ราคา + Limit ของแพ็กนี้</button></div>` : "") : ""}</div>`; }).join("")}`;
+}
+function renderHx(){
+  let el = $("#hx"); const p = $("#view-build").hidden ? null : active();
+  if (!HX.open || !p) { if (el) el.hidden = true; return; }
+  if (!el) { el = document.createElement("aside"); el.id = "hx"; el.className = "hx"; el.setAttribute("aria-label", "ประวัติราคา"); document.body.appendChild(el); }
+  el.hidden = false;
+  el.innerHTML = `<div class="hx-h"><h2>ประวัติราคา <small>${esc(p.name)}</small></h2><button class="hx-x" data-hxclose aria-label="ปิด">×</button></div>
+    <div class="hx-seg" role="tablist"><button role="tab" aria-selected="${HX.tab === "item"}" data-hxtab="item">ไอเทมนี้เคยขาย</button><button role="tab" aria-selected="${HX.tab === "pack"}" data-hxtab="pack">แพ็กที่คล้ายกัน</button></div>
+    <div class="hx-f"><select data-hxrange aria-label="ช่วงเวลา"><option value="6"${HX.range === "6" ? " selected" : ""}>6 เดือนก่อนแพ็กนี้</option><option value="12"${HX.range === "12" ? " selected" : ""}>12 เดือนก่อนแพ็กนี้</option><option value="all"${HX.range === "all" ? " selected" : ""}>ทั้งหมด</option></select></div>
+    <div class="hx-b">${HX.tab === "item" ? hxItemPane(p) : hxPackPane(p)}</div>`;
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-hx],[data-hxopen],[data-hxtab],[data-hxclose],[data-hxcmp],[data-hxuse]"); if (!t) return;
+  e.preventDefault(); e.stopPropagation();
+  if (t.dataset.hx != null) { HX.open = true; HX.tab = "item"; HX.key = t.dataset.hx; }
+  else if (t.dataset.hxopen) { HX.open = true; HX.tab = t.dataset.hxopen; HX.cmp = null; }
+  else if (t.dataset.hxtab) HX.tab = t.dataset.hxtab;
+  else if (t.dataset.hxcmp) HX.cmp = HX.cmp === t.dataset.hxcmp ? "-" : t.dataset.hxcmp;
+  else if (t.hasAttribute("data-hxclose")) HX.open = false;
+  else if (t.dataset.hxuse) { const [fid, pid] = t.dataset.hxuse.split("|"), q = S.folders.find(f => f.id === fid)?.packs.find(x => x.id === pid), p = active();
+    if (q && p) { p.price = q.price; p.limit = q.limit; save(); renderEditor(); renderRight(); toast(`ใช้ราคา ฿${fmt(n(q.price))} และ Limit ${n(q.limit) || "ไม่จำกัด"} จาก “${q.name}” แล้ว`); } }
+  renderHx();
+}, true);
+document.addEventListener("change", e => { const t = e.target;
+  if (t.matches("[data-hxkey]")) { HX.key = t.value; renderHx(); }
+  else if (t.matches("[data-hxrange]")) { HX.range = t.value; renderHx(); renderRight(); } });
+document.addEventListener("click", e => { if (HX.open && e.target.closest('[role="tab"][id^="tab-"]')) setTimeout(renderHx); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && HX.open) { HX.open = false; renderHx(); } });
+
 /* ---------- pack tabs + summary ---------- */
 function renderRight(){
   if (!active()) return;
@@ -2017,6 +2192,7 @@ function renderRight(){
     <section class="b-prev" aria-label="ตัวอย่างการ์ดบนหน้าร้าน"><h2>หน้าตาบนหน้าร้าน</h2>
       <div class="shop b-shop">${shopCard(p, false).replace('role="button" tabindex="0" data-open=', 'data-preview=').replace(/aria-label="ดูรายละเอียด [^"]*"/, "")}</div></section>
     <section class="b-check" aria-label="สิ่งที่ต้องตรวจ"><h2>ก่อน Export</h2>${issuesHTML(iss)}</section>
+    ${hxCard(p)}
     <h2>มูลค่าและส่วนลด</h2>
     <div class="big"><span class="v num ${dc}">${isFinite(r.disc) ? pct(r.disc) : "–"}</span><span class="verdict ${dc}">${verdict(r.disc)}</span></div>
     <div class="story">${story}</div>
@@ -2038,6 +2214,7 @@ function renderRight(){
       [n(p.limit) > 0 ? `Total Paid ต่อรอบ (× ${fmt(n(p.limit),0)})` : "Limit", n(p.limit) > 0 ? `฿${fmt(r.totalPaid)}` : "ไม่จำกัด"],
       ...(() => { const ri = resetInfo(p); return ri.on && ri.periods && n(p.limit) > 0 ? [["จำนวนรอบ (Reset)", `${ri.periods} รอบ`], ["ซื้อสูงสุดตลอดโปร / ID", `฿${fmt(r.totalPaid * ri.periods)}`]] : []; })()])}
     ${rnd ? `<div class="foot">% ลดคิดจากมูลค่าเฉลี่ยต่อครั้ง (EV ของสุ่ม + ของที่ได้แน่นอน) เทียบราคา</div>` : ""}`;
+  if (HX.open) renderHx();
 }
 
 
