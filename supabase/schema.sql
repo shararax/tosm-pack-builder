@@ -426,3 +426,18 @@ end $$;
 alter table public.packs replica identity full;
 alter table public.edit_locks replica identity full;
 alter table public.folders replica identity full;
+
+-- ---------------------------------------------------------------------------
+-- settings the page gets only AFTER login (never in /config.js or the page source)
+-- set the item list URL with: update private.app_config set value = 'https://script.google.com/macros/s/…/exec' where key = 'items_api';
+insert into private.app_config (key, value) values ('items_api', ''), ('items_key', '') on conflict (key) do nothing;
+create or replace function public.client_config()
+returns jsonb language sql stable security definer set search_path = '' as $$
+  select case when public.is_member() then jsonb_build_object(
+    'appClientKey', (select value from private.app_config where key = 'app_client_key'),
+    'itemsApi',     (select value from private.app_config where key = 'items_api'),
+    'itemsKey',     coalesce((select value from private.app_config where key = 'items_key'), '')
+  ) end;
+$$;
+revoke all on function public.client_config() from public, anon;
+grant execute on function public.client_config() to authenticated;
