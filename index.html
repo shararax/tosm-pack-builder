@@ -1445,7 +1445,7 @@ const shown = packs => packs.filter(p => !p.hidden);
    any other currency has its own amount (curPrice) and the THB price is only a value reference */
 const PAY_CURS = ["Seed Point", "Golden Seed Point", "God Coin", "Fellow Coin", "Kupole Coin"];
 const payCur = p => String(p?.currency || "").trim() || "Seed Point";
-const isSP = p => !p?._curCustom && payCur(p) === "Seed Point";   // "กรอกเอง" with no name yet already counts as another currency
+const isSP = p => !p?._curCustom && !p?.shopItem && payCur(p) === "Seed Point";   // exchange-shop products always carry their price in curPrice, even when paid in Seed Point   // "กรอกเอง" with no name yet already counts as another currency
 const payAmt = p => isSP(p) ? n(p.price) * (n(S.settings.seed) || 10) : n(p.curPrice);
 const curShort = c => c === "Seed Point" ? "SP" : c === "Golden Seed Point" ? "GSP" : c;
 const curLabel = p => isSP(p) ? "SP" : String(p.currency || "").trim() ? curShort(payCur(p)) : "สกุลเงิน";
@@ -4133,7 +4133,7 @@ function syncShop(f){
   if (!isShop(f)) return;
   const sh = shopOf(f);
   f.packs.forEach(p => {
-    Object.assign(p, { mode:"fixed", bonus:false, currency: sh.cur1.trim() || "Point", currency2: sh.cur2.trim(), azCat: sh.azCat,
+    Object.assign(p, { shopItem:true, mode:"fixed", bonus:false, currency: sh.cur1.trim() || "Point", currency2: sh.cur2.trim(), azCat: sh.azCat,
       start: sh.start, startTime: sh.startTime, end: sh.end, endTime: sh.endTime, types: p.types || [], reset: blankReset() });
     const x = itemOfRow(p); if (x) { const m = BYID.get(x.itemId); if (m) x.name = m.name; }
     p.name = shopName(sh, x);
