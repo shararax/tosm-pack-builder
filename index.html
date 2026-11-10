@@ -2212,9 +2212,16 @@ document.addEventListener("keydown", e => { const row = e.target.closest?.("[dat
   if (e.key === "Escape" && HX.open) { HX.open = false; renderHx(); } });
 
 /* ---------- pack tabs + summary ---------- */
+/* the strip shows packs in the same order as สรุปแพ็ก (by category, then the order set there);
+   hidden packs go to the end, the most recently hidden on the far right */
+function tabOrder(){
+  const v = shown(S.packs);
+  return [...catsInUse(v).flatMap(c => v.filter(p => catOf(p) === c)),
+    ...S.packs.filter(p => p.hidden).map((p, i) => ({ p, i })).sort((a, b) => (n(a.p.hiddenAt) - n(b.p.hiddenAt)) || (a.i - b.i)).map(o => o.p)];
+}
 function renderRight(){
   if (!active()) return;
-  $("#packs").innerHTML = S.packs.map(p => { const r = calc(p);
+  $("#packs").innerHTML = tabOrder().map(p => { const r = calc(p);
     return `<button class="pk${p.hidden ? " hid" : ""}" data-pack="${p.id}" aria-current="${p.id===S.activeId}" title="${esc(p.name)}${p.hidden ? " (ซ่อนอยู่)" : ""}">
       ${p.hidden ? `<span class="hid-tag">${EYE_OFF}ซ่อนอยู่</span>` : ""}<span class="n">${esc(p.name)}</span><span class="p num">฿${fmt(n(p.price))}</span>
       <span class="m">${p.mode==="random"?"Random":"Fixed"} · <span class="${discClass(r.disc)}">${!isFinite(r.disc) ? "–" : r.disc < 0 ? "แพงกว่า " + fmt(-r.disc*100,1) + "%" : "ลด " + fmt(r.disc*100,1) + "%"}</span></span></button>`; }).join("")
@@ -2904,7 +2911,7 @@ B.addEventListener("click", e => {
   if (t.dataset.bmenu) { BV.menu = BV.menu === t.dataset.bmenu ? null : t.dataset.bmenu; BV.armed = null; renderBoard(); return; }
   if (t.dataset.bact) { const [a, pid] = t.dataset.bact.split("|"), p = S.packs.find(x => x.id === pid); if (!p) return;
     if (a === "open") { S.activeId = pid; save(false); BV.menu = null; showView("build"); return; }
-    if (a === "hide") { BV.menu = null; toast(`ซ่อน “${p.name}” แล้ว · เลิกซ่อนได้ที่หน้าจัดแพ็ก`); return mut(() => { p.hidden = true; }); }
+    if (a === "hide") { BV.menu = null; toast(`ซ่อน “${p.name}” แล้ว · เลิกซ่อนได้ที่หน้าจัดแพ็ก`); return mut(() => { p.hidden = true; p.hiddenAt = Date.now(); }); }
     if (a === "dup") { BV.menu = null; return mut(() => { const c = JSON.parse(JSON.stringify(p)); c.id = uid(); c.name += " (สำเนา)"; c.items.forEach(x => x.uid = uid()); S.packs.splice(S.packs.indexOf(p) + 1, 0, c); }); }
     if (a === "del") { if (BV.armed !== pid) { BV.armed = pid; renderBoard(); return; }
       BV.menu = BV.armed = null; return mut(() => { S.packs = S.packs.filter(x => x !== p); if (!S.packs.length) S.packs.push(blankPack({ name:"แพ็ก 1" })); if (S.activeId === pid) S.activeId = S.packs[0].id; }); } }
@@ -3261,7 +3268,7 @@ document.addEventListener("click", e => {
     case "btn-dup": { const c = JSON.parse(JSON.stringify(p)); c.id = uid(); c.name += " (สำเนา)"; c.items.forEach(x => x.uid = uid());
       S.packs.splice(S.packs.indexOf(p)+1, 0, c); S.activeId = c.id; rerenderAll(); break; }
     case "btn-delpack": confirmDelete(t, p); break;
-    case "btn-hide": p.hidden = !p.hidden; if (!p.hidden) delete p.hidden; rerenderAll(); toast(p.hidden ? `ซ่อน “${p.name}” แล้ว · ไม่นับในสรุปแพ็ก นำเสนอ และสรุปไอเทม` : `เลิกซ่อน “${p.name}” แล้ว`); break;
+    case "btn-hide": p.hidden = !p.hidden; if (p.hidden) p.hiddenAt = Date.now(); else { delete p.hidden; delete p.hiddenAt; } rerenderAll(); toast(p.hidden ? `ซ่อน “${p.name}” แล้ว · ไม่นับในสรุปแพ็ก นำเสนอ และสรุปไอเทม` : `เลิกซ่อน “${p.name}” แล้ว`); break;
     case "btn-paste": openPaste(); break;
     case "btn-checkall": checkAll(); break;
     case "btn-custom": p.items.push({ uid:uid(), custom:true, itemId:"", name:"", amt:1, tp:"", tpGame:"", chance:"", fixed:false });
@@ -4289,7 +4296,7 @@ const shopSave = () => { const f = curFolder(); syncShop(f); save(); };
     if (b.id === "shp-export") { save(); return openExport(f.id, "both"); }
     if (b.id === "shp-rename") { openSettings(); return; }
     if (b.dataset.sact) { const [a, pid] = b.dataset.sact.split("|"), p = f.packs.find(x => x.id === pid); if (!p) return;
-      if (a === "hide") { p.hidden = !p.hidden; if (!p.hidden) delete p.hidden; }
+      if (a === "hide") { p.hidden = !p.hidden; if (p.hidden) p.hiddenAt = Date.now(); else { delete p.hidden; delete p.hiddenAt; } }
       if (a === "del") { if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "ลบ?"; b.classList.add("armed"); return; } f.packs.splice(f.packs.indexOf(p), 1); }
       shopSave(); renderShop(); } });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && SHV.paste != null && !$("#view-shop").hidden) { SHV.paste = null; renderShop(); } });
