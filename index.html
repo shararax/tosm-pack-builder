@@ -1447,6 +1447,19 @@ const PAY_CURS = ["Seed Point", "Golden Seed Point", "God Coin", "Fellow Coin", 
 const payCur = p => String(p?.currency || "").trim() || "Seed Point";
 const isSP = p => !p?._curCustom && !p?.shopItem && payCur(p) === "Seed Point";   // exchange-shop products always carry their price in curPrice, even when paid in Seed Point   // "กรอกเอง" with no name yet already counts as another currency
 const payAmt = p => isSP(p) ? n(p.price) * (n(S.settings.seed) || 10) : n(p.curPrice);
+/* Golden Seed Point + Player EXP a purchase gives (null = none).
+   pack: GSP = price × SP-per-baht, EXP = price.
+   exchange-shop product: "auto" = from its Seed Point price (GSP = SP, EXP = SP ÷ SP-per-baht, rounded) — only when the shop is paid in Seed Point;
+   "custom" = amounts typed for each product */
+function bonusOf(p){
+  if (p?.bonus === false) return null;
+  const seed = n(S.settings.seed) || 10;
+  if (p.shopItem) {
+    if (p.bonusMode === "custom") return { gsp:n(p.gspC), exp:n(p.expC), custom:true };
+    return payCur(p) === "Seed Point" ? { gsp:Math.round(n(p.curPrice)), exp:Math.round(n(p.curPrice) / seed) } : { gsp:0, exp:0, bad:true };
+  }
+  return { gsp:n(p.price) * seed, exp:n(p.price) };
+}
 const curShort = c => c === "Seed Point" ? "SP" : c === "Golden Seed Point" ? "GSP" : c;
 const curLabel = p => isSP(p) ? "SP" : String(p.currency || "").trim() ? curShort(payCur(p)) : "สกุลเงิน";
 const payText = p => `${fmt(payAmt(p), 0)} ${curShort(payCur(p))}`;
@@ -1710,8 +1723,8 @@ function calc(p){
   r.ratio = price > 0 ? r.value / price : NaN;
   r.totalPaid = price * n(p.limit);
   r.seed = price * (n(S.settings.seed) || 10);        // sale price in SP
-  r.bonus = p.bonus !== false;
-  r.gsp = r.bonus ? r.seed : 0; r.exp = r.bonus ? price : 0;
+  const bo = bonusOf(p);
+  r.bonus = !!bo; r.gsp = bo ? bo.gsp : 0; r.exp = bo ? bo.exp : 0;
   /* buying the whole Limit: per round, and over every Reset round of the sale */
   const lim = n(p.limit), riL = resetInfo(p);
   r.lim = lim; r.rounds = riL.on ? (riL.periods || null) : 1;
@@ -1769,8 +1782,8 @@ function validatePack(p, f = curFolder()){
   } else {
     const cp = String(p.curPrice ?? "").trim();
     if (cp === "" || !(n(cp) > 0)) add("curPrice", "err", `ใส่ราคาเป็น ${payCur(p)} มากกว่า 0`, cp === "");
-    if (p.bonus !== false) add("cur", "warn", `แพ็กนี้ซื้อด้วย ${payCur(p)} แต่เลือก “ได้รับ GSP + Player EXP” ไว้ · ตรวจสอบว่าต้องให้โบนัสจริงหรือไม่`);
-    if (p.bonus !== false && !(n(price) > 0)) add("price", "err", "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
+    if (p.bonus !== false && !p.shopItem) add("cur", "warn", `แพ็กนี้ซื้อด้วย ${payCur(p)} แต่เลือก “ได้รับ GSP + Player EXP” ไว้ · ตรวจสอบว่าต้องให้โบนัสจริงหรือไม่`);
+    if (p.bonus !== false && !p.shopItem && !(n(price) > 0)) add("price", "err", "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
   }
   if (String(p.pos ?? "").trim() !== "" && !isInt(p.pos)) add("pos", "err", "ลำดับแสดงต้องเป็นจำนวนเต็ม");
   const lim = String(p.limit ?? "").trim();
@@ -3466,7 +3479,7 @@ function xlItemRow(x){
 function xlPack(p){
   const errors = [], warns = [], name = bundleBase(p), price = n(p.price), seed = n(S.settings.seed) || 10;
   if (!name) errors.push("ยังไม่มีชื่อแพ็ก");
-  if (isSP(p) ? !(price > 0) : p.bonus !== false && !(price > 0)) errors.push(isSP(p) ? "ยังไม่ได้ใส่ราคา (ต้องใช้คำนวณ GSP / EXP)" : "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
+  if (!p.shopItem && (isSP(p) ? !(price > 0) : p.bonus !== false && !(price > 0))) errors.push(isSP(p) ? "ยังไม่ได้ใส่ราคา (ต้องใช้คำนวณ GSP / EXP)" : "ใส่มูลค่าเทียบเป็นบาทเพื่อคำนวณ GSP / EXP หรือเอาติ๊ก “ได้รับ GSP + Player EXP” ออก");
   const rnd = p.mode === "random";
   const sure = p.items.filter(x => !rnd || x.fixed), pool = rnd ? p.items.filter(x => !x.fixed) : [];
   const mk = (bundle, type, list, isRand) => {
@@ -3478,9 +3491,17 @@ function xlPack(p){
     return rows;
   };
   const fixedRows = mk(name, "FIXED", sure, false);
-  if (p.bonus !== false) {                                   // the pack gives Golden Seed Point + Player EXP
-    fixedRows.push([name, "FIXED", "WALLET_DEBIT", GSP_ID, price * seed, "Trainee", 0, "", ""]);
-    fixedRows.push([name, "FIXED", "PLAYER_EXPERIENCE", EXP_ID, price, "Trainee", 0, "", ""]);
+  const bo = bonusOf(p);
+  if (bo && !p.shopItem) {                                   // the pack gives Golden Seed Point + Player EXP
+    fixedRows.push([name, "FIXED", "WALLET_DEBIT", GSP_ID, bo.gsp, "Trainee", 0, "", ""]);
+    fixedRows.push([name, "FIXED", "PLAYER_EXPERIENCE", EXP_ID, bo.exp, "Trainee", 0, "", ""]);
+  } else if (bo) {                                           // exchange shop: as set for the shop
+    if (bo.bad) errors.push(`GSP / EXP แบบคำนวณปกติใช้ได้เฉพาะร้านที่ใช้ Seed Point · ร้านนี้ใช้ ${payCur(p)} ให้เลือก “กำหนดเอง” ในตั้งค่าร้าน`);
+    else if (!(bo.gsp > 0) && !(bo.exp > 0)) errors.push("ยังไม่ได้ใส่จำนวน GSP / EXP ของสินค้านี้");
+    else {
+      if (bo.gsp > 0) fixedRows.push([name, "FIXED", "WALLET_DEBIT", GSP_ID, bo.gsp, "Trainee", 0, "", ""]);
+      if (bo.exp > 0) fixedRows.push([name, "FIXED", "PLAYER_EXPERIENCE", EXP_ID, bo.exp, "Trainee", 0, "", ""]);
+    }
   }
   /* a Random pack with no guaranteed items and no GSP / EXP has nothing for its FIXED bundle: only the RANDOM one is made */
   const bundles = fixedRows.length || !rnd ? [{ name, type:"FIXED", rows:fixedRows }] : [];
@@ -4109,7 +4130,7 @@ function makeCloud(){
    A folder of kind "shop": every row is one Product that sells one item, bought with 1–2 event currencies
    (both paid together). Shop-wide settings live on the folder and are copied into every product, so the
    item summary, Export and the database keep treating products as ordinary one-item packs. */
-const SHOP_DEF = { cur1:"", cur2:"", azCat:"", start:"", startTime:"00:01", end:"", endTime:"23:59", prefix:"", sort:"price" };
+const SHOP_DEF = { cur1:"", cur2:"", azCat:"", start:"", startTime:"00:01", end:"", endTime:"23:59", prefix:"", sort:"price", bonus:"none" };
 const isShop = f => f?.kind === "shop";
 const sortKeys = o => Array.isArray(o) ? o.map(sortKeys) : o && typeof o === "object" ? Object.keys(o).sort().reduce((a, k) => (a[k] = sortKeys(o[k]), a), {}) : o;
 const folderMeta = f => f?.kind ? { kind:f.kind, shop:sortKeys({ ...SHOP_DEF, ...(f.shop || {}) }) } : {};
@@ -4133,7 +4154,7 @@ function syncShop(f){
   if (!isShop(f)) return;
   const sh = shopOf(f);
   f.packs.forEach(p => {
-    Object.assign(p, { shopItem:true, mode:"fixed", bonus:false, currency: sh.cur1.trim() || "Point", currency2: sh.cur2.trim(), azCat: sh.azCat,
+    Object.assign(p, { shopItem:true, mode:"fixed", bonus:(sh.bonus || "none") !== "none", bonusMode:sh.bonus || "none", currency: sh.cur1.trim() || "Point", currency2: sh.cur2.trim(), azCat: sh.azCat,
       start: sh.start, startTime: sh.startTime, end: sh.end, endTime: sh.endTime, types: p.types || [], reset: blankReset() });
     const x = itemOfRow(p); if (x) { const m = BYID.get(x.itemId); if (m) x.name = m.name; }
     p.name = shopName(sh, x);
@@ -4152,7 +4173,7 @@ function newShop(){
 }
 function shopProduct(x){
   return { id:uid(), name:"", mode:"fixed", category:"แพ็ก & จุ่ม", types:[], image:x.image || "", start:"", startTime:"00:01", end:"", endTime:"23:59",
-    reset:blankReset(), limit:x.limit ?? 1, price:"", pos:0, bonus:false, idea:"", curPrice:x.cost ?? "", curPrice2:x.cost2 ?? "",
+    reset:blankReset(), limit:x.limit ?? 1, price:"", pos:0, bonus:false, idea:"", curPrice:x.cost ?? "", curPrice2:x.cost2 ?? "", gspC:x.gsp ?? "", expC:x.exp ?? "",
     items:[{ uid:uid(), itemId:x.id || "", name:x.name || "", amt:x.amt ?? 1, tp:x.tp ?? (S.memo[x.id]?.tp ?? ""), tpGame:"", chance:"", fixed:false, ...(x.id ? {} : { custom:true }) }] };
 }
 /* paste from Sheet: header row decides the columns; Item ID, Amt, Point Req and Limit are enough */
@@ -4163,7 +4184,8 @@ function parseShopPaste(text){
   const find = (re, not) => H.findIndex(h => re.test(h) && !(not && not.test(h)));
   const col = { id:find(/item\s*id|^id$|ไอดี/), name:find(/item\s*name|^name$|ชื่อ/), amt:find(/^amt|amount|qty|จำนวน/),
     cost2:find(/(point\s*req|ราคา|cost|price|แต้ม)\s*2/), cost:find(/point\s*req|^ราคา|^cost|^price|แต้มที่ใช้/, /2|total|รวม/),
-    limit:find(/limit|จำกัด/), img:find(/image\s*url|^cdn/), tp:find(/^tp\s*\/\s*(ea|ชิ้น)|^tp$/) };
+    limit:find(/limit|จำกัด/), img:find(/image\s*url|^cdn/), tp:find(/^tp\s*\/\s*(ea|ชิ้น)|^tp$/),
+    gsp:find(/^gsp$|golden\s*seed/), exp:find(/^exp$|player\s*exp/) };
   if (col.id < 0) return { err:"ไม่พบหัวคอลัมน์ Item ID · คัดลอกแถวหัวตารางมาด้วย" };
   if (col.cost < 0) return { err:"ไม่พบหัวคอลัมน์ราคา (เช่น Point Req)" };
   const num = v => { const s = String(v ?? "").replace(/,/g, "").trim(); return s === "" ? "" : isFinite(+s) ? +s : ""; };
@@ -4174,7 +4196,8 @@ function parseShopPaste(text){
     if (!id && !name) return;
     if (/^(total|รวม)/i.test(id) || /^(total|รวม)/i.test(name)) return;
     const x = { id, name, amt: num(cell(r, "amt")) || 1, cost: num(cell(r, "cost")), cost2: col.cost2 >= 0 ? num(cell(r, "cost2")) : "",
-      limit: num(cell(r, "limit")) === "" ? 1 : num(cell(r, "limit")), image: cell(r, "img"), tp: col.tp >= 0 ? num(cell(r, "tp")) : undefined };
+      limit: num(cell(r, "limit")) === "" ? 1 : num(cell(r, "limit")), image: cell(r, "img"), tp: col.tp >= 0 ? num(cell(r, "tp")) : undefined,
+      gsp: col.gsp >= 0 ? num(cell(r, "gsp")) : "", exp: col.exp >= 0 ? num(cell(r, "exp")) : "" };
     if (x.cost === "") skipped.push(`แถว ${i + 2} (${name || id}) ไม่มีราคา`);
     list.push(x);
   });
@@ -4201,6 +4224,7 @@ function renderShop(){
   const azCustom = SHV.azCustom || (sh.azCat && !azList().includes(sh.azCat));
   const azOpts = `<option value="">— เลือกหมวดหมู่ —</option>` + azList().map(a => `<option value="${esc(a)}"${!azCustom && sh.azCat === a ? " selected" : ""}>${esc(a)}</option>`).join("")
     + `<option value="__custom"${azCustom ? " selected" : ""}>กรอกเอง…</option>`;
+  const bon = sh.bonus || "none", spShop = (sh.cur1 || "").trim() === "Seed Point";
   const row = (p, i) => { const x = itemOfRow(p) || {}, m = BYID.get(x.itemId), val = n(x.tp) * n(x.amt) * rate;
     const need = n(p.curPrice) * Math.max(0, n(p.limit));
     return `<tr data-srow="${p.id}" class="${p.hidden ? "hid" : ""}">
@@ -4210,6 +4234,9 @@ function renderShop(){
       <td class="r"><input class="cell${n(p.curPrice) > 0 ? "" : " miss"}" type="number" min="0" step="1" data-sf="${p.id}|curPrice" value="${esc(p.curPrice)}" aria-label="ราคา ${esc(sh.cur1 || "Point")}"></td>
       ${sh.cur2 ? `<td class="r"><input class="cell" type="number" min="0" step="1" data-sf="${p.id}|curPrice2" value="${esc(p.curPrice2 ?? "")}" aria-label="ราคา ${esc(sh.cur2)}"></td>` : ""}
       <td class="r"><input class="cell" type="number" min="0" step="1" data-sf="${p.id}|limit" value="${esc(p.limit)}" aria-label="Limit"></td>
+      ${bon === "custom" ? `<td class="r"><input class="cell${n(p.gspC) > 0 || n(p.expC) > 0 ? "" : " miss"}" type="number" min="0" step="1" data-sf="${p.id}|gspC" value="${esc(p.gspC ?? "")}" aria-label="GSP ที่ได้"></td>
+        <td class="r"><input class="cell" type="number" min="0" step="1" data-sf="${p.id}|expC" value="${esc(p.expC ?? "")}" aria-label="Player EXP ที่ได้"></td>`
+      : bon === "auto" ? (() => { const b = bonusOf(p); return b?.bad ? `<td class="r num warnt" colspan="2">ใช้ไม่ได้</td>` : `<td class="r num">${fmt(b?.gsp || 0, 0)}</td><td class="r num">${fmt(b?.exp || 0, 0)}</td>`; })() : ""}
       <td class="r num">${fmt(need, 0)}</td>
       <td class="r num">${val ? "฿" + fmt(val, 0) : `<input class="cell tp miss" type="number" min="0" step="any" data-sf="${p.id}|tp" value="" placeholder="TP" aria-label="TP ต่อชิ้น">`}</td>
       <td><div class="acts"><button class="linkbtn" data-sact="hide|${p.id}">${p.hidden ? "เลิกซ่อน" : "ซ่อน"}</button><button class="x" data-sact="del|${p.id}" aria-label="ลบ">×</button></div></td></tr>`; };
@@ -4233,6 +4260,12 @@ function renderShop(){
         ${fld("shs-prefix", `ชื่อนำหน้า Bundle <span class="opt-l">ไม่บังคับ</span>`, inp("prefix", "เช่น Shop Savior's"), "Bundle = คำนี้ + ชื่อไอเทม + ลำดับ · ชื่อ Product ไม่มีคำนี้")}
         <div class="fld when"><label for="shs-start">เปิดร้าน <span class="req">*</span></label><div class="dt">${inp("start", "", "date")}${inp("startTime", "", "time")}</div></div>
         <div class="fld when"><label for="shs-end">ปิดร้าน <span class="req">*</span></label><div class="dt">${inp("end", "", "date")}${inp("endTime", "", "time")}</div></div>
+        ${fld("shs-bonus", "GSP + Player EXP", `<select id="shs-bonus" data-shs="bonus">
+            <option value="none"${bon === "none" ? " selected" : ""}>ไม่ได้รับ</option>
+            <option value="auto"${bon === "auto" ? " selected" : ""}${spShop ? "" : " disabled"}>ได้รับ · คำนวณแบบปกติ${spShop ? "" : " (ใช้ได้เฉพาะ Seed Point)"}</option>
+            <option value="custom"${bon === "custom" ? " selected" : ""}>ได้รับ · กำหนดเองรายสินค้า</option></select>`,
+          bon === "auto" ? (spShop ? `GSP = ราคา Seed Point · EXP = ราคา ÷ ${fmt(n(S.settings.seed) || 10, 0)} (ปัดเศษ)` : `<span class="warnt">ร้านนี้ไม่ได้ใช้ Seed Point · เลือก “กำหนดเอง”</span>`)
+          : bon === "custom" ? "ใส่จำนวนในคอลัมน์ GSP / EXP ของตารางสินค้า หรือวางจาก Sheet ที่มีคอลัมน์ GSP, EXP" : "สินค้าในร้านนี้ไม่มีโบนัส")}
         ${fld("shs-sort", "ลำดับแสดง", `<select id="shs-sort" data-shs="sort"><option value="price"${sh.sort === "price" ? " selected" : ""}>ราคาสูงไปต่ำ</option><option value="row"${sh.sort === "row" ? " selected" : ""}>ตามลำดับในตาราง</option></select>`)}
       </div></section>
     <section class="shp-sum" aria-live="polite">
@@ -4244,7 +4277,7 @@ function renderShop(){
       <div class="shp-bar"><h2 id="shl-h">สินค้า <small>${f.packs.length} รายการ</small></h2>
         <span style="flex:1"></span><button class="btn" id="shp-add">+ เพิ่มแถว</button><button class="btn pri" id="shp-paste">วางจาก Sheet</button></div>
       ${f.packs.length ? `<div class="tblwrap"><table class="shp-t">
-        <thead><tr><th title="Position ใน Aztek · เลขมากอยู่บนสุด">ลำดับ</th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">${esc(sh.cur1 || "Point")}</th>${sh.cur2 ? `<th class="r">${esc(sh.cur2)}</th>` : ""}<th class="r">Limit</th><th class="r">ใช้รวม (ครบ Limit)</th><th class="r">มูลค่า / ครั้ง</th><th></th></tr></thead>
+        <thead><tr><th title="Position ใน Aztek · เลขมากอยู่บนสุด">ลำดับ</th><th>ไอเทม</th><th class="r">จำนวน</th><th class="r">${esc(sh.cur1 || "Point")}</th>${sh.cur2 ? `<th class="r">${esc(sh.cur2)}</th>` : ""}<th class="r">Limit</th>${bon !== "none" ? `<th class="r" title="Golden Seed Point ต่อการแลก 1 ครั้ง">GSP</th><th class="r" title="Player EXP ต่อการแลก 1 ครั้ง">EXP</th>` : ""}<th class="r">ใช้รวม (ครบ Limit)</th><th class="r">มูลค่า / ครั้ง</th><th></th></tr></thead>
         <tbody>${rows.map(row).join("")}</tbody></table></div>`
       : `<div class="shp-empty"><b>ยังไม่มีสินค้า</b><p>คัดลอกตารางจาก Google Sheet ทั้งแถวหัวตาราง แล้วกด <b>วางจาก Sheet</b><br>ต้องมีอย่างน้อยคอลัมน์ Item ID, Amt, Point Req และ Limit</p></div>`}
     </section>
