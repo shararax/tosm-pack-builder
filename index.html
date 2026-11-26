@@ -30,11 +30,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f151c; --panel:#17202a; --panel-2:#1c2733; --ink:#e6ecf2; --muted:#94a3b3; --line:#2a3644;
   --navy:#23415f; --navy-ink:#eef4fb; --accent:#e3a33a; --accent-soft:#3a2c14; --accent-ink:#fbe9c8;
-  --good:#45b884; --good-soft:#163628; --warn:#e48a4f; --warn-soft:#3a2416; --bad:#e86a6a; --bad-soft:#3d1d1d; --chip:#213040; color-scheme:dark; --z-set:#15223a; --z-set-line:#2c4568; --z-set-ink:#8fb8ee; --z-itm:#13281e; --z-itm-line:#2a4f3b; --z-itm-ink:#7fd1a2;}}
+  --good:#45b884; --good-soft:#163628; --warn:#e48a4f; --warn-soft:#3a2416; --bad:#e86a6a; --bad-soft:#3d1d1d; --chip:#213040; color-scheme:dark; --z-set:#15223a; --z-set-line:#2c4568; --z-set-ink:#8fb8ee; --z-itm:#13281e; --z-itm-line:#2a4f3b; --z-itm-ink:#7fd1a2; --sim-bg:#3a3214; --sim-line:#7a6524;}}
 :root[data-theme="dark"]{
   --bg:#0f151c; --panel:#17202a; --panel-2:#1c2733; --ink:#e6ecf2; --muted:#94a3b3; --line:#2a3644;
   --navy:#23415f; --navy-ink:#eef4fb; --accent:#e3a33a; --accent-soft:#3a2c14; --accent-ink:#fbe9c8;
-  --good:#45b884; --good-soft:#163628; --warn:#e48a4f; --warn-soft:#3a2416; --bad:#e86a6a; --bad-soft:#3d1d1d; --chip:#213040; color-scheme:dark; --z-set:#15223a; --z-set-line:#2c4568; --z-set-ink:#8fb8ee; --z-itm:#13281e; --z-itm-line:#2a4f3b; --z-itm-ink:#7fd1a2;}
+  --good:#45b884; --good-soft:#163628; --warn:#e48a4f; --warn-soft:#3a2416; --bad:#e86a6a; --bad-soft:#3d1d1d; --chip:#213040; color-scheme:dark; --z-set:#15223a; --z-set-line:#2c4568; --z-set-ink:#8fb8ee; --z-itm:#13281e; --z-itm-line:#2a4f3b; --z-itm-ink:#7fd1a2; --sim-bg:#3a3214; --sim-line:#7a6524;}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -882,6 +882,16 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-f .search{flex:1 1 260px;width:auto}
 .iv-f select{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--ink);max-width:100%}
 .iv-note{margin:0;font-size:12.5px;color:var(--muted)}
+.iv-t td.sim,.iv-dt td.sim{background:var(--sim-bg,#fff6cc)!important;font-style:italic}
+.iv-dt td.sim small{font-style:normal;color:var(--muted)}
+.simk{background:var(--sim-bg,#fff6cc);font-style:italic;padding:0 4px;border-radius:3px;color:var(--ink)}
+.iv-sim{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;padding:8px 12px;border:1px dashed var(--line);border-radius:8px}
+.iv-sim.on{border-color:var(--sim-line,#e3c34a);background:var(--sim-bg,#fff6cc)}
+.iv-sim input[type=number]{width:72px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
+.iv-sim small{flex-basis:100%;color:var(--muted);font-size:11.5px}
+.ivx-opts{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.ivx-o{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:8px;padding:12px 14px;cursor:pointer;color:var(--ink);font:inherit}
+.ivx-o:hover,.ivx-o:focus-visible{border-color:var(--accent)}.ivx-o b{font-weight:600}.ivx-o span{font-size:12.5px;color:var(--muted)}
 .iv-note.warn{color:var(--warn)}
 .iv-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);max-height:calc(100vh - 300px)}
 .iv-t{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
@@ -3676,6 +3686,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") { $("#save-m
    "max"    = offer × Limit × Reset rounds (most one ID can get)
    "sold"   = offer × the pack's real sold count (p.sold, typed in after the promotion; later from Grafana)
    week/month columns: offer & max count in full in every period the pack is on sale; sold is split by days on sale */
+/* simulation for packs without a real count: "players × buys each" (sold view) or "buys per ID" (max view, unlimited packs).
+   one setting for every pack, kept in this browser. the numbers are the average the stated rates give (what a long simulation settles on) */
+const IVSIM = (() => { try { return { on:true, players:100, buys:10, ...JSON.parse(localStorage.getItem("tosm-pack-builder:ivsim") || "{}") }; } catch { return { on:true, players:100, buys:10 }; } })();
+const ivSimSave = () => { try { localStorage.setItem("tosm-pack-builder:ivsim", JSON.stringify(IVSIM)); } catch {} };
+const simTxt = metric => metric === "sold" ? `ผู้เล่น ${fmt(n(IVSIM.players), 0)} คน ซื้อคนละ ${fmt(n(IVSIM.buys), 0)} ครั้ง` : `ซื้อ ${fmt(n(IVSIM.buys), 0)} ครั้งต่อ ID`;
 const IV = { mode:"promo", metric:"offer", range:"all", from:"", to:"", q:"", type:"", grade:"", folder:"", cat:"", btype:"", open:new Set(), pick:{}, soldPanel:false, sort:"total" };
 const DAY = 864e5;
 const dOnly = s => { if (!s) return null; const d = new Date(s + "T00:00"); return isNaN(d) ? null : d; };
@@ -3691,12 +3706,18 @@ function perBuy(p){
     const e = m.get(k) || { x, pcs:0, rand:false, ch:0 }; e.pcs += n(x.amt) * share; if (rnd && !x.fixed) { e.rand = true; e.ch += n(x.chance); } m.set(k, e); });
   return m;
 }
-function packMult(p, metric){
-  if (metric === "offer") return 1;
-  if (metric === "sold") { const v = String(p.sold ?? "").trim(); return v === "" ? null : n(v); }
-  const lim = n(p.limit); if (!(lim > 0)) return Infinity;
-  const ri = resetInfo(p); return lim * (ri.on ? (ri.periods || 1) : 1);
+/* how many times the pack counts, and where that number comes from: offer | max | real | sim */
+function packMultSrc(p, metric){
+  if (metric === "offer") return { m:1, src:"offer" };
+  const lim = n(p.limit), ri = resetInfo(p), cap = lim > 0 ? lim * (ri.on ? (ri.periods || 1) : 1) : Infinity;
+  const buys = Math.min(Math.max(0, n(IVSIM.buys)), cap);          // a player cannot buy past the Limit
+  if (metric === "sold") { const v = String(p.sold ?? "").trim();
+    if (v !== "") return { m:n(v), src:"real" };
+    return IVSIM.on ? { m:Math.max(0, n(IVSIM.players)) * buys, src:"sim" } : { m:null, src:"none" }; }
+  if (cap === Infinity) return IVSIM.on ? { m:buys, src:"sim" } : { m:Infinity, src:"max" };
+  return { m:cap, src:"max" };
 }
+const packMult = (p, metric) => packMultSrc(p, metric).m;
 function itemsRange(){
   const all = S.folders.flatMap(f => shown(f.packs)).map(packSpan).filter(Boolean);
   const now = new Date(); now.setHours(0,0,0,0);
@@ -3729,7 +3750,8 @@ function itemsData(){
     if (range && IV.range !== "all" && (!sp || !overlapDays(sp, range))) return;
     if (IV.cat && catOf(p) !== IV.cat) return;
     if (IV.btype && p.mode !== IV.btype) return;
-    entries.push({ f, p, sp, buy:perBuy(p), mult:packMult(p, metric) }); }));
+    const ms = packMultSrc(p, metric);
+    entries.push({ f, p, sp, buy:perBuy(p), mult:ms.m, src:ms.src }); }));
   const cols = IV.mode === "promo" ? folders.filter(f => entries.some(e => e.f === f)).map(f => ({ key:f.id, label:f.name, f }))
     : itemPeriods(range);
   const rows = new Map(); let undated = 0;
@@ -3739,12 +3761,12 @@ function itemsData(){
       const m = BYID.get(b.x.itemId);
       if (IV.type && m?.type !== IV.type) return; if (IV.grade && m?.grade !== IV.grade) return;
       if (IV.q) { const q = IV.q.toLowerCase(); if (![b.x.name, m?.th, b.x.itemId].some(v => String(v || "").toLowerCase().includes(q))) return; }
-      const r = rows.get(k) || { k, x:b.x, m, cells:new Map(), total:0, inf:false, none:true, packs:[], rand:false, first:null, last:null };
-      const mult = e.mult;
-      const add = (ck, v) => r.cells.set(ck, (r.cells.get(ck) || 0) + v);
+      const r = rows.get(k) || { k, x:b.x, m, cells:new Map(), simc:new Map(), total:0, simTotal:0, inf:false, none:true, packs:[], rand:false, first:null, last:null };
+      const mult = e.mult, sim = e.src === "sim";
+      const add = (ck, v) => { r.cells.set(ck, (r.cells.get(ck) || 0) + v); if (sim) r.simc.set(ck, (r.simc.get(ck) || 0) + v); };
       if (mult === Infinity) r.inf = true;
       const base = mult === null || mult === Infinity ? 0 : b.pcs * mult;
-      if (mult !== null && mult !== Infinity) { r.none = false; r.total += base; }
+      if (mult !== null && mult !== Infinity) { r.none = false; r.total += base; if (sim) r.simTotal += base; }
       if (IV.mode === "promo") { if (mult === Infinity) r.cells.set(e.f.id + ":inf", 1); else if (mult !== null) add(e.f.id, base); }
       else cols.forEach(c => { const od = overlapDays(e.sp, c.span); if (!od) return;
         if (mult === Infinity) { r.cells.set(c.key + ":inf", 1); return; } if (mult === null) return;
@@ -3767,7 +3789,8 @@ function renderItems(){
   const D = itemsData(), types = [...new Set(ITEMS.map(i => i.type).filter(Boolean))].sort(), grades = [...new Set(ITEMS.map(i => i.grade).filter(Boolean))].sort();
   const chip = (k, v, t, cur) => `<button class="iv-chip" data-iv="${k}|${v}" aria-pressed="${cur === v}">${t}</button>`;
   const cell = (r, c) => { const inf = r.cells.has(c.key + ":inf"), v = r.cells.get(c.key), on = IV.open.has(r.k) && IV.pick[r.k] === c.key;
-    return `<td class="r num${v || inf ? " ivc" : ""}${on ? " picked" : ""}"${v || inf ? ` data-ivcell="${esc(r.k)}|${esc(c.key)}" title="ดูเฉพาะแพ็กใน ${esc(c.label)}"` : ""}>${v ? (r.rand ? "≈" : "") + ifmt(v) : ""}${inf ? `<span class="inf" title="มีแพ็กที่ซื้อได้ไม่จำกัด">${v ? " +" : ""}∞</span>` : ""}${!v && !inf ? `<span class="dash">–</span>` : ""}</td>`; };
+    const sm = (r.simc.get(c.key) || 0) > 0;
+    return `<td class="r num${v || inf ? " ivc" : ""}${on ? " picked" : ""}${sm ? " sim" : ""}"${v || inf ? ` data-ivcell="${esc(r.k)}|${esc(c.key)}" title="ดูเฉพาะแพ็กใน ${esc(c.label)}"` : ""}>${v ? (sm ? "~" : r.rand ? "≈" : "") + ifmt(v) : ""}${inf ? `<span class="inf" title="มีแพ็กที่ซื้อได้ไม่จำกัด">${v ? " +" : ""}∞</span>` : ""}${!v && !inf ? `<span class="dash">–</span>` : ""}</td>`; };
   const soldMissing = IV.metric === "sold" ? D.entries.filter(e => String(e.p.sold ?? "").trim() === "").length : 0;
   el.innerHTML = `<div class="iv">
     <header class="iv-head"><div><h1>สรุปไอเทม</h1><p>${METRIC_TXT[IV.metric]} · ${D.range ? `${thShort(D.range[0])} ${D.range[0].getFullYear() + 543 - 2500} – ${thShort(D.range[1])} ${D.range[1].getFullYear() + 543 - 2500}` : "ยังไม่มีแพ็กที่ใส่วันขาย"} · ${D.list.length} ไอเทม จาก ${D.entries.length} แพ็ก</p></div>
@@ -3785,8 +3808,16 @@ function renderItems(){
         <select id="iv-btype" aria-label="ประเภท Bundle"><option value="">Fixed และ Random</option><option value="fixed"${IV.btype === "fixed" ? " selected" : ""}>เฉพาะ Fixed</option><option value="random"${IV.btype === "random" ? " selected" : ""}>เฉพาะ Random</option></select>
         <select id="iv-sort" aria-label="เรียง"><option value="total"${IV.sort === "total" ? " selected" : ""}>จำนวนมากสุดก่อน</option><option value="name"${IV.sort === "name" ? " selected" : ""}>ชื่อ ก–ฮ / A–Z</option></select></div>
     </div>
+    ${IV.metric !== "offer" ? `<div class="iv-sim${IVSIM.on ? " on" : ""}"><label class="chk"><input type="checkbox" id="iv-simon"${IVSIM.on ? " checked" : ""}> จำลอง${IV.metric === "sold" ? "แพ็กที่ยังไม่มียอดขายจริง" : "แพ็กที่ซื้อได้ไม่จำกัด"}</label>
+      ${IVSIM.on ? `${IV.metric === "sold" ? `<span>ผู้เล่น <input id="iv-simn" type="number" min="0" step="1" value="${esc(IVSIM.players)}" aria-label="จำนวนผู้เล่น"> คน</span>` : ""}<span>ซื้อคนละ <input id="iv-simk" type="number" min="0" step="1" value="${esc(IVSIM.buys)}" aria-label="จำนวนครั้งที่ซื้อต่อคน"> ครั้ง</span>
+        <small>${IV.metric === "sold" ? "ใช้กับแพ็กที่ยังไม่ได้กรอกยอดขาย · แพ็กที่มี Limit จะนับไม่เกิน Limit ต่อคน" : "แพ็กที่มี Limit ยังนับครบ Limit เหมือนเดิม"} · ตัวเลขคือค่าเฉลี่ยตามเรท</small>` : ""}</div>` : ""}
+    ${IV.xopen ? `<div class="modal" id="ivx-m"><div class="settings" role="dialog" aria-labelledby="ivx-t"><h3 id="ivx-t">Export สรุปไอเทม</h3>
+      <p>ใช้มุมมองและตัวกรองที่เลือกอยู่ตอนนี้ (${esc(METRIC_TXT[IV.metric])})</p>
+      <div class="ivx-opts"><button class="ivx-o" data-ivx="count"><b>แบบจำนวน</b><span>ไอเทม 1 แถว · จำนวนแยกตาม${IV.mode === "promo" ? "โปรโมชัน" : IV.mode === "week" ? "สัปดาห์" : "เดือน"} และยอดรวม</span></button>
+        <button class="ivx-o" data-ivx="full"><b>แบบละเอียด</b><span>เพิ่มชีต “รายแพ็ก”: ไอเทมนี้อยู่ในแพ็กไหน ราคาแพ็ก จำนวนครั้งที่ซื้อ (จริงหรือจำลอง) จำนวนชิ้น และราคาเฉลี่ยต่อชิ้น · พร้อมชีต “วิธีคิด”</span></button></div>
+      <div class="sb-acts"><span style="flex:1"></span><button class="btn" id="ivx-cancel">ยกเลิก</button></div></div></div>` : ""}
     ${IV.soldPanel ? soldPanelHTML(D) : ""}
-    ${soldMissing ? `<p class="iv-note warn">${soldMissing} แพ็กยังไม่ได้กรอกยอดขายจริง จึงยังไม่ถูกนับ · กด “กรอกยอดขายจริง”</p>` : ""}
+    ${soldMissing && !IVSIM.on ? `<p class="iv-note warn">${soldMissing} แพ็กยังไม่ได้กรอกยอดขายจริง จึงยังไม่ถูกนับ · กด “กรอกยอดขายจริง”</p>` : ""}
     ${D.undated ? `<p class="iv-note">${D.undated} แพ็กยังไม่มีวันขาย จึงไม่อยู่ในมุมมองรายสัปดาห์ / รายเดือน</p>` : ""}
     ${D.list.length ? `<div class="iv-wrap"><table class="iv-t">
       <thead><tr><th class="iv-item">ไอเทม</th>${D.cols.map(c => `<th class="r">${esc(c.label)}</th>`).join("")}<th class="r tot">รวม</th><th>ขายช่วง</th></tr></thead>
@@ -3794,10 +3825,10 @@ function renderItems(){
         return `<tr class="iv-row${open ? " open" : ""}" data-ivrow="${esc(r.k)}" tabindex="0" aria-expanded="${open}">
           <td class="iv-item"><span class="iv-nm">${icon(r.m?.img, r.m?.grade, r.x.name, "ico sm")}<span><b>${esc(r.x.name || "(ไม่มีชื่อ)")}</b><small>${esc(r.x.itemId || "นอกลิสต์")} · ${r.packs.length} แพ็ก · ${nPromo} โปร${r.rand ? " · มีสุ่ม" : ""}</small></span></span></td>
           ${D.cols.map(c => cell(r, c)).join("")}
-          <td class="r num tot">${r.none && !r.inf ? `<span class="dash">–</span>` : (r.rand ? "≈" : "") + ifmt(r.total) + (r.inf ? `<span class="inf"> +∞</span>` : "")}</td>
+          <td class="r num tot${r.simTotal > 0 ? " sim" : ""}">${r.none && !r.inf ? `<span class="dash">–</span>` : (r.simTotal > 0 ? "~" : r.rand ? "≈" : "") + ifmt(r.total) + (r.inf ? `<span class="inf"> +∞</span>` : "")}</td>
           <td class="iv-when">${r.first ? `${thShort(r.first)} – ${thShort(r.last)}` : "ไม่มีวันขาย"}</td></tr>
           ${open ? `<tr class="iv-det"><td colspan="${D.cols.length + 3}">${detailHTML(r, D)}</td></tr>` : ""}`; }).join("")}</tbody></table></div>
-      <p class="iv-note">≈ = ค่าเฉลี่ยจากเรทสุ่ม · ∞ = มีแพ็กที่ซื้อได้ไม่จำกัด · ${IV.mode === "promo" ? "นับตามโปรโมชันที่แพ็กอยู่" : IV.metric === "sold" ? "ยอดขายจริงแบ่งตามจำนวนวันที่แพ็กขายในแต่ละช่วง" : "แพ็กที่ขายคร่อมหลายช่วง นับเต็มในทุกช่วงที่ขายอยู่ · ช่องรวมนับแพ็กละครั้งเดียว"} · สัปดาห์เริ่มวันจันทร์</p>`
+      <p class="iv-note">≈ = ค่าเฉลี่ยจากเรทสุ่ม · ∞ = มีแพ็กที่ซื้อได้ไม่จำกัด · ${D.entries.some(e => e.src === "sim") ? `<span class="simk">~ พื้นเหลือง</span> = มีส่วนที่จำลอง (${simTxt(IV.metric)}) ไม่ใช่ยอดจริง · ` : ""}${IV.mode === "promo" ? "นับตามโปรโมชันที่แพ็กอยู่" : IV.metric === "sold" ? "ยอดขายจริงแบ่งตามจำนวนวันที่แพ็กขายในแต่ละช่วง" : "แพ็กที่ขายคร่อมหลายช่วง นับเต็มในทุกช่วงที่ขายอยู่ · ช่องรวมนับแพ็กละครั้งเดียว"} · สัปดาห์เริ่มวันจันทร์</p>`
       : `<div class="iv-empty">${S.folders.length ? "ไม่พบไอเทมตามตัวกรองนี้" : "ยังไม่มีโปรโมชัน · สร้างโฟลเดอร์และจัดแพ็กก่อน แล้วสรุปไอเทมจะขึ้นที่นี่"}</div>`}
   </div>`;
   if (fk && $("#" + fk)) { const i = $("#" + fk); i.focus(); try { i.setSelectionRange(i.value.length, i.value.length); } catch {} }
@@ -3827,7 +3858,7 @@ function detailHTML(r, D){
           <td class="r num">${e.b.rand ? `≈${ifmt(e.b.pcs)} <small>(${fmt(e.b.ch, 4)}%)</small>` : ifmt(e.b.pcs)}</td>
           <td class="r num">${lim > 0 ? `${fmt(lim,0)} × ${ri.on ? (ri.periods || "?") : 1}` : "ไม่จำกัด"}</td>
           <td class="r">${txTag(e.p)}<input class="iv-in" id="sold-${e.p.id}" type="number" min="0" step="1" data-sold="${e.f.id}|${e.p.id}" value="${esc(e.p.sold ?? "")}" placeholder="–" aria-label="ยอดขายจริงของ ${esc(e.p.name)}"></td>
-          <td class="r num">${v === null ? "–" : v === Infinity ? "∞" : (e.b.rand ? "≈" : "") + ifmt(v)}${share(e) < 1 ? `<small> (${Math.round(share(e) * 100)}% ของช่วง)</small>` : ""}</td></tr>`; }).join("")}</tbody>`).join("")}</table>`;
+          <td class="r num${e.src === "sim" ? " sim" : ""}">${v === null ? "–" : v === Infinity ? "∞" : (e.src === "sim" ? "~" : e.b.rand ? "≈" : "") + ifmt(v)}${e.src === "sim" ? `<small> จำลอง ${fmt(e.mult, 0)} ครั้ง</small>` : ""}${share(e) < 1 ? `<small> (${Math.round(share(e) * 100)}% ของช่วง)</small>` : ""}</td></tr>`; }).join("")}</tbody>`).join("")}</table>`;
 }
 const txTag = p => String(p.soldTx ?? "") !== "" ? `<small class="iv-tx" title="จำนวนครั้งที่กดซื้อ (transactions) · 1 ครั้งซื้อได้หลายแพ็ก">กดซื้อ ${fmt(n(p.soldTx), 0)} ครั้ง</small>` : "";
 function soldPanelHTML(D){
@@ -3924,7 +3955,9 @@ IVEL.addEventListener("click", e => {
   if (e.target.closest("#iv-sold")) { IV.soldPanel = !IV.soldPanel; IV.imp = null; renderItems(); return; }
   if (e.target.closest("#si-cancel")) { IV.imp = null; renderItems(); return; }
   if (e.target.closest("#si-apply")) return salesApply();
-  if (e.target.closest("#iv-xlsx")) return exportItems();
+  if (e.target.closest("#iv-xlsx")) { IV.xopen = true; renderItems(); return; }
+  if (e.target.closest("#ivx-cancel") || e.target.id === "ivx-m") { IV.xopen = false; renderItems(); return; }
+  const xg = e.target.closest("[data-ivx]"); if (xg) { IV.xopen = false; renderItems(); return exportItems(xg.dataset.ivx); }
   const clr = e.target.closest("[data-ivclear]"); if (clr) { delete IV.pick[clr.dataset.ivclear]; renderItems(); return; }
   if (e.target.closest("input,select,textarea,button")) return;
   const pc = e.target.closest("[data-ivcell]"); if (pc) { const [k, c] = pc.dataset.ivcell.split("|");
@@ -3933,9 +3966,12 @@ IVEL.addEventListener("click", e => {
 });
 IVEL.addEventListener("keydown", e => { const row = e.target.closest?.("[data-ivrow]"); if (row && (e.key === "Enter" || e.key === " ") && e.target === row) { e.preventDefault(); row.click(); } });
 IVEL.addEventListener("input", e => { const t = e.target;
-  if (t.id === "iv-q") { IV.q = t.value; clearTimeout(IVEL._t); IVEL._t = setTimeout(renderItems, 150); } });
+  if (t.id === "iv-q") { IV.q = t.value; clearTimeout(IVEL._t); IVEL._t = setTimeout(renderItems, 150); }
+  if (t.id === "iv-simn" || t.id === "iv-simk") { IVSIM[t.id === "iv-simn" ? "players" : "buys"] = Math.max(0, Math.round(n(t.value))); ivSimSave(); clearTimeout(IVEL._t); IVEL._t = setTimeout(renderItems, 350); } });
 IVEL.addEventListener("change", e => { const t = e.target;
-  if (t.id === "iv-folder") IV.folder = t.value; else if (t.id === "iv-type") IV.type = t.value; else if (t.id === "iv-grade") IV.grade = t.value;
+  if (t.id === "iv-simon") { IVSIM.on = t.checked; ivSimSave(); }
+  else if (t.id === "iv-simn" || t.id === "iv-simk") return;
+  else if (t.id === "iv-folder") IV.folder = t.value; else if (t.id === "iv-type") IV.type = t.value; else if (t.id === "iv-grade") IV.grade = t.value;
   else if (t.id === "iv-sort") IV.sort = t.value; else if (t.id === "iv-cat") IV.cat = t.value; else if (t.id === "iv-btype") IV.btype = t.value; else if (t.id === "iv-from") IV.from = t.value; else if (t.id === "iv-to") IV.to = t.value;
   else if (t.dataset.sold) { const [fid, pid] = t.dataset.sold.split("|"); if (setSold(fid, pid, t.value)) save(); }
   else if (t.id === "iv-impscope") { IV.impScope = t.value; }
@@ -3950,16 +3986,82 @@ IVEL.addEventListener("change", e => { const t = e.target;
   else return;
   if (t.tagName === "TEXTAREA" || t.dataset.simp != null) setTimeout(renderItems, 0); else renderItems();   // change fires on blur: redraw after it finishes
 });
-async function exportItems(){
-  let X; try { X = await loadXLSX(); } catch { toast("โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่"); return; }
-  const D = itemsData();
-  const head = ["Item ID", "ไอเทม", "จำนวนแพ็ก", "มีสุ่ม", ...D.cols.map(c => c.label), "รวม", "ขายช่วงแรก", "ขายช่วงสุดท้าย"];
-  const rows = D.list.map(r => [r.x.itemId || "", r.x.name || "", r.packs.length, r.rand ? "ใช่" : "",
-    ...D.cols.map(c => r.cells.has(c.key + ":inf") ? "ไม่จำกัด" : Math.round((r.cells.get(c.key) || 0) * 100) / 100),
-    r.inf ? "ไม่จำกัด" : Math.round(r.total * 100) / 100, r.first ? ymd(r.first) : "", r.last ? ymd(r.last) : ""]);
+/* styled workbook for สรุปไอเทม (xlsx-js-style = SheetJS + cell styles); falls back to plain SheetJS, where "~" in the number format still marks simulated numbers */
+let xlsxStyleLib = null;
+function loadXLSXStyle(){
+  return xlsxStyleLib ||= new Promise((ok, bad) => { const sc = document.createElement("script");
+    sc.src = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js";
+    sc.onload = () => window.XLSX && window.XLSX.utils ? ok(window.XLSX) : bad(); sc.onerror = () => { xlsxStyleLib = null; bad(); }; document.head.append(sc); });
+}
+async function exportItems(kind = "count"){
+  let X; try { X = await loadXLSXStyle(); } catch { try { X = await loadXLSX(); } catch { toast("โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่"); return; } }
+  const D = itemsData(), full = kind === "full", rate = n(S.settings.rate) || 2;
   const mode = { promo:"รายโปรโมชัน", week:"รายสัปดาห์", month:"รายเดือน" }[IV.mode], met = { offer:"วางขายต่อครั้ง", max:"สูงสุดต่อ ID", sold:"ขายจริง" }[IV.metric];
-  xlDownload(X, "สรุปไอเทม", head, rows, head.map((h, i) => ({ wch: i === 1 ? 34 : i === 0 ? 12 : 14 })), `สรุปไอเทม - ${mode} - ${met}.xlsx`);
-  toast("Export สรุปไอเทมแล้ว");
+  const anySim = D.entries.some(e => e.src === "sim"), stamp = new Date().toLocaleString("th-TH-u-ca-gregory", { dateStyle:"medium", timeStyle:"short" });
+  const F = { sim:{ fill:{ patternType:"solid", fgColor:{ rgb:"FFF2B3" } }, font:{ italic:true } }, head:{ font:{ bold:true, color:{ rgb:"FFFFFF" } }, fill:{ patternType:"solid", fgColor:{ rgb:"1D3A5C" } }, alignment:{ wrapText:true, vertical:"center" } },
+    title:{ font:{ bold:true, sz:14 } }, note:{ font:{ italic:true, color:{ rgb:"5B4A00" } }, fill:{ patternType:"solid", fgColor:{ rgb:"FFF2B3" } } }, muted:{ font:{ color:{ rgb:"5B6876" } } } };
+  const NUM = "#,##0.##", SIMNUM = '"~"#,##0.##';
+  /* build a sheet from rows of cells: plain values or { v, sim, z } */
+  const sheet = (intro, head, rows, widths) => {
+    const aoa = [...intro.map(r => r.map(c => c?.v ?? c)), head, ...rows.map(r => r.map(c => c && typeof c === "object" ? c.v : c))];
+    const ws = X.utils.aoa_to_sheet(aoa); ws["!cols"] = widths.map(w => ({ wch:w }));
+    const at = (r, c) => ws[X.utils.encode_cell({ r, c })];
+    intro.forEach((row, i) => row.forEach((c, j) => { const cell = at(i, j); if (cell && c?.s) cell.s = c.s; }));
+    head.forEach((h, j) => { const cell = at(intro.length, j); if (cell) cell.s = F.head; });
+    rows.forEach((row, i) => row.forEach((c, j) => { const cell = at(intro.length + 1 + i, j); if (!cell) return;
+      if (typeof cell.v === "number") cell.z = c?.z || (c?.sim ? SIMNUM : NUM);
+      if (c?.sim) cell.s = F.sim; else if (c?.s) cell.s = c.s; }));
+    ws["!freeze"] = { xSplit:0, ySplit:intro.length + 1 };
+    return ws;
+  };
+  const r2 = v => Math.round(v * 100) / 100;
+  const srcTxt = r => r.simTotal <= 0 ? (IV.metric === "sold" ? "ขายจริง" : IV.metric === "max" ? "สูงสุดตาม Limit" : "ต่อ 1 ครั้ง")
+    : r.simTotal >= r.total - 1e-9 ? "จำลองทั้งหมด" : `ผสม · จำลอง ${Math.round(r.simTotal / r.total * 100)}%`;
+  const intro = [[{ v:`สรุปไอเทม · ${mode} · ${METRIC_TXT[IV.metric]}`, s:F.title }], [{ v:`Export ${stamp}`, s:F.muted }]];
+  if (anySim) intro.push([{ v:`ตัวเลขพื้นเหลือง / มี ~ นำหน้า = การจำลอง (${simTxt(IV.metric)} · ค่าเฉลี่ยตามเรท) ไม่ใช่ยอดขายจริง`, s:F.note }]);
+  intro.push([]);
+  const head = ["Item ID", "ไอเทม", "จำนวนแพ็ก", "มีสุ่ม", ...D.cols.map(c => c.label), "รวม", "ที่มาของตัวเลข", "ขายช่วงแรก", "ขายช่วงสุดท้าย"];
+  const rows = D.list.map(r => [r.x.itemId || "", r.x.name || "", r.packs.length, r.rand ? "ใช่" : "",
+    ...D.cols.map(c => r.cells.has(c.key + ":inf") ? "ไม่จำกัด" : { v:r2(r.cells.get(c.key) || 0), sim:(r.simc.get(c.key) || 0) > 0 }),
+    r.inf ? "ไม่จำกัด" : { v:r2(r.total), sim:r.simTotal > 0 }, srcTxt(r), r.first ? ymd(r.first) : "", r.last ? ymd(r.last) : ""]);
+  const wb = X.utils.book_new();
+  X.utils.book_append_sheet(wb, sheet(intro, head, rows, head.map((h, i) => i === 1 ? 34 : i === 0 ? 12 : h === "ที่มาของตัวเลข" ? 20 : 14)), "สรุปไอเทม");
+  if (full) {
+    /* one row per item per pack: what was sold, at what price, how many times (real or simulated), and the price per piece */
+    const dh = ["Item ID", "ไอเทม", "โปรโมชัน", "แพ็ก", "แบบ", "เริ่มขาย", "จบขาย", "ราคาแพ็ก", "สกุลเงิน", "Limit / ID", "ได้ต่อ 1 ครั้ง (เฉลี่ย)", "เรทสุ่ม %",
+      "จำนวนครั้งที่ซื้อ", "ที่มาของจำนวนครั้ง", "จำนวนชิ้นรวม", "≈ ราคาเฉลี่ยต่อชิ้น", "มูลค่าแพ็ก (บาท)", "ส่วนลด %"];
+    const drows = [];
+    D.list.forEach(r => r.packs.slice().sort((a, b) => (a.sp?.[0] || 0) - (b.sp?.[0] || 0)).forEach(e => {
+      const p = e.p, c = calc(p), sp = isSP(p), price = sp ? n(p.price) : payAmt(p), lim = n(p.limit), ri = resetInfo(p);
+      const unit = c.value > 0 && price > 0 && n(e.b.x.tp) > 0 ? n(e.b.x.tp) * rate * price / c.value : "";
+      const sim = e.src === "sim", m = e.mult;
+      const srcT = { real:"ขายจริง", sim:`จำลอง (${simTxt(IV.metric)})`, max:m === Infinity ? "ไม่จำกัด" : "สูงสุดตาม Limit", offer:"ต่อ 1 ครั้ง", none:"ยังไม่มียอดขาย" }[e.src];
+      drows.push([r.x.itemId || "", r.x.name || "", e.f.name, p.name, p.mode === "random" ? "Random" : "Fixed",
+        e.sp ? ymd(e.sp[0]) : "", e.sp ? ymd(e.sp[1]) : "", price || "", sp ? "บาท" : payCur(p), lim > 0 ? `${lim}${ri.on ? ` × ${ri.periods || "?"} รอบ` : ""}` : "ไม่จำกัด",
+        { v:Math.round(e.b.pcs * 1e6) / 1e6, z:"#,##0.######" }, e.b.rand ? { v:r2(e.b.ch * 1e4) / 1e4, z:"0.####" } : "",
+        m === null ? "" : m === Infinity ? "ไม่จำกัด" : { v:m, sim }, srcT,
+        m === null || m === Infinity ? "" : { v:r2(e.b.pcs * m), sim }, unit === "" ? "" : { v:r2(unit), z:"#,##0.00" },
+        c.value > 0 ? r2(c.value) : "", isFinite(c.disc) ? { v:r2(c.disc * 100), z:"0.0" } : ""]); }));
+    X.utils.book_append_sheet(wb, sheet(intro, dh, drows, [12, 30, 20, 30, 8, 11, 11, 10, 12, 12, 12, 9, 13, 24, 13, 13, 13, 9]), "รายแพ็ก");
+    const how = [["วิธีคิด"], [],
+      ["มุมมอง", `${mode} · ${METRIC_TXT[IV.metric]}`],
+      ["จำนวนชิ้นรวม", "ได้ต่อ 1 ครั้ง × จำนวนครั้งที่ซื้อ · แพ็กสุ่มใช้ค่าเฉลี่ยตามเรท (≈)"],
+      ["จำนวนครั้งที่ซื้อ", IV.metric === "sold" ? "ใช้ยอดขายจริงที่กรอกไว้ก่อนเสมอ" : IV.metric === "max" ? "Limit × จำนวนรอบ Reset (สูงสุดที่ 1 ID ซื้อได้)" : "1 ครั้ง"],
+      ...(anySim || IVSIM.on && IV.metric !== "offer" ? [["การจำลอง", IV.metric === "sold" ? `แพ็กที่ยังไม่มียอดขาย: ${simTxt("sold")} (แพ็กที่มี Limit นับไม่เกิน Limit ต่อคน)` : `แพ็กที่ซื้อได้ไม่จำกัด: ${simTxt("max")}`],
+        ["", "ตัวเลขจำลองคือค่าเฉลี่ยตามเรท (ค่าที่การสุ่มจำนวนมากจะได้ใกล้เคียง) · ในไฟล์มีพื้นเหลือง ตัวเอียง และ ~ นำหน้า"]] : []),
+      ["≈ ราคาเฉลี่ยต่อชิ้น", "มูลค่าไอเทม 1 ชิ้น (TP × " + rate + " บาท) × ราคาแพ็ก ÷ มูลค่าแพ็ก = ราคาที่ผู้เล่นจ่ายต่อชิ้นหลังหักส่วนลดของแพ็ก · หน่วยเดียวกับราคาแพ็ก"],
+      ["", "แพ็กสุ่มใช้มูลค่าเฉลี่ย (EV) · ไอเทมที่ไม่มี TP จะว่าง"],
+      ["ตัวกรองที่ใช้", [IV.folder && `โปร: ${S.folders.find(f => f.id === IV.folder)?.name}`, IV.cat && `หมวด: ${catLabel(IV.cat)}`, IV.btype && `แบบ: ${IV.btype}`, IV.type && `ประเภท: ${IV.type}`, IV.grade && `เกรด: ${IV.grade}`, IV.q && `ค้นหา: ${IV.q}`, IV.range !== "all" && `ช่วง: ${IV.range === "custom" ? IV.from + " – " + IV.to : IV.range}`].filter(Boolean).join(" · ") || "ไม่มี"],
+      ["Export เมื่อ", stamp]];
+    const ws = X.utils.aoa_to_sheet(how); ws["!cols"] = [{ wch:20 }, { wch:110 }]; if (ws.A1) ws.A1.s = F.title;
+    X.utils.book_append_sheet(wb, ws, "วิธีคิด");
+  }
+  const buf = X.write(wb, { bookType:"xlsx", type:"array" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  a.download = `สรุปไอเทม - ${mode} - ${met}${full ? " - ละเอียด" : ""}${anySim ? " (มีจำลอง)" : ""}.xlsx`.replace(/[\\/:*?"<>|]/g, "_");
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  toast(`Export สรุปไอเทม${full ? " แบบละเอียด" : ""}แล้ว`);
 }
 
 /* ---------- shared-data helpers (used by the Apps Script and the database modes) ---------- */
