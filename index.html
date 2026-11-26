@@ -889,7 +889,11 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-sim.on{border-color:var(--sim-line,#e3c34a);background:var(--sim-bg,#fff6cc)}
 .iv-sim input[type=number]{width:72px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit}
 .iv-sim small{flex-basis:100%;color:var(--muted);font-size:11.5px}
-.ivx-opts{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.ivx-opts{display:flex;flex-direction:column;gap:10px;margin:12px 0}.ivx-opts.off{opacity:.45;pointer-events:none}
+.ivx-sc{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+.ivx-sc legend{font-size:12.5px;color:var(--muted);padding:0 4px}.ivx-sc small{color:var(--muted);font-size:11.5px}
+.ivx-fl{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto;padding:4px 0 0 22px}
+.ivx-fl .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px}.ivx-qa{display:flex;gap:12px;margin-top:4px}
 .ivx-o{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--line);background:var(--panel-2);border-radius:8px;padding:12px 14px;cursor:pointer;color:var(--ink);font:inherit}
 .ivx-o:hover,.ivx-o:focus-visible{border-color:var(--accent)}.ivx-o b{font-weight:600}.ivx-o span{font-size:12.5px;color:var(--muted)}
 .iv-note.warn{color:var(--warn)}
@@ -3742,9 +3746,9 @@ function itemPeriods(range){
   return out;
 }
 /* rows: one per item; cols: folders (promo) or periods (week / month) */
-function itemsData(){
+function itemsData(only){                               // only: Set of folder ids to keep (export "เลือกโฟลเดอร์")
   const range = itemsRange(), metric = IV.metric;
-  const folders = S.folders.filter(f => !IV.folder || f.id === IV.folder);
+  const folders = S.folders.filter(f => (!IV.folder || f.id === IV.folder) && (!only || only.has(f.id)));
   const entries = [];                                  // every (folder, pack) that counts
   folders.forEach(f => shown(f.packs).forEach(p => { const sp = packSpan(p);
     if (range && IV.range !== "all" && (!sp || !overlapDays(sp, range))) return;
@@ -3813,7 +3817,13 @@ function renderItems(){
         <small>${IV.metric === "sold" ? "ใช้กับแพ็กที่ยังไม่ได้กรอกยอดขาย · แพ็กที่มี Limit จะนับไม่เกิน Limit ต่อคน" : "แพ็กที่มี Limit ยังนับครบ Limit เหมือนเดิม"} · ตัวเลขคือค่าเฉลี่ยตามเรท</small>` : ""}</div>` : ""}
     ${IV.xopen ? `<div class="modal" id="ivx-m"><div class="settings" role="dialog" aria-labelledby="ivx-t"><h3 id="ivx-t">Export สรุปไอเทม</h3>
       <p>ใช้มุมมองและตัวกรองที่เลือกอยู่ตอนนี้ (${esc(METRIC_TXT[IV.metric])})</p>
-      <div class="ivx-opts"><button class="ivx-o" data-ivx="count"><b>แบบจำนวน</b><span>ไอเทม 1 แถว · จำนวนแยกตาม${IV.mode === "promo" ? "โปรโมชัน" : IV.mode === "week" ? "สัปดาห์" : "เดือน"} และยอดรวม</span></button>
+      ${(() => { const fs = [...new Set(D.entries.map(e => e.f))], sel = IV.xsel || new Set();
+        return `<fieldset class="ivx-sc"><legend>โฟลเดอร์ที่จะ Export</legend>
+        <label class="chk"><input type="radio" name="ivx-scope" value="all"${IV.xscope !== "pick" ? " checked" : ""}> ทั้งหมดตามตัวกรอง <small>${fs.length} โฟลเดอร์</small></label>
+        <label class="chk"><input type="radio" name="ivx-scope" value="pick"${IV.xscope === "pick" ? " checked" : ""}> เลือกเอง</label>
+        ${IV.xscope === "pick" ? `<div class="ivx-fl">${fs.map(f => `<label class="chk"><input type="checkbox" data-ivxf="${f.id}"${sel.has(f.id) ? " checked" : ""}> <span class="dot" style="background:${folderColor(f)}"></span>${esc(f.name)} <small>${D.entries.filter(e => e.f === f).length} แพ็ก</small></label>`).join("")}
+          <div class="ivx-qa"><button class="linkbtn" data-ivxall="1">เลือกทั้งหมด</button><button class="linkbtn" data-ivxall="0">ไม่เลือกเลย</button></div></div>` : ""}</fieldset>`; })()}
+      <div class="ivx-opts${IV.xscope === "pick" && !(IV.xsel && IV.xsel.size) ? " off" : ""}"><button class="ivx-o" data-ivx="count"><b>แบบจำนวน</b><span>ไอเทม 1 แถว · จำนวนแยกตาม${IV.mode === "promo" ? "โปรโมชัน" : IV.mode === "week" ? "สัปดาห์" : "เดือน"} และยอดรวม</span></button>
         <button class="ivx-o" data-ivx="full"><b>แบบละเอียด</b><span>เพิ่มชีต “รายแพ็ก”: ไอเทมนี้อยู่ในแพ็กไหน ราคาแพ็ก จำนวนครั้งที่ซื้อ (จริงหรือจำลอง) จำนวนชิ้น และราคาเฉลี่ยต่อชิ้น · พร้อมชีต “วิธีคิด”</span></button></div>
       <div class="sb-acts"><span style="flex:1"></span><button class="btn" id="ivx-cancel">ยกเลิก</button></div></div></div>` : ""}
     ${IV.soldPanel ? soldPanelHTML(D) : ""}
@@ -3957,7 +3967,10 @@ IVEL.addEventListener("click", e => {
   if (e.target.closest("#si-apply")) return salesApply();
   if (e.target.closest("#iv-xlsx")) { IV.xopen = true; renderItems(); return; }
   if (e.target.closest("#ivx-cancel") || e.target.id === "ivx-m") { IV.xopen = false; renderItems(); return; }
-  const xg = e.target.closest("[data-ivx]"); if (xg) { IV.xopen = false; renderItems(); return exportItems(xg.dataset.ivx); }
+  const xa = e.target.closest("[data-ivxall]"); if (xa) { IV.xsel = new Set(xa.dataset.ivxall === "1" ? itemsData().entries.map(x => x.f.id) : []); renderItems(); return; }
+  const xg = e.target.closest("[data-ivx]"); if (xg) { const only = IV.xscope === "pick" ? new Set(IV.xsel || []) : null;
+    if (only && !only.size) { toast("เลือกอย่างน้อย 1 โฟลเดอร์"); return; }
+    IV.xopen = false; renderItems(); return exportItems(xg.dataset.ivx, only); }
   const clr = e.target.closest("[data-ivclear]"); if (clr) { delete IV.pick[clr.dataset.ivclear]; renderItems(); return; }
   if (e.target.closest("input,select,textarea,button")) return;
   const pc = e.target.closest("[data-ivcell]"); if (pc) { const [k, c] = pc.dataset.ivcell.split("|");
@@ -3969,7 +3982,9 @@ IVEL.addEventListener("input", e => { const t = e.target;
   if (t.id === "iv-q") { IV.q = t.value; clearTimeout(IVEL._t); IVEL._t = setTimeout(renderItems, 150); }
   if (t.id === "iv-simn" || t.id === "iv-simk") { IVSIM[t.id === "iv-simn" ? "players" : "buys"] = Math.max(0, Math.round(n(t.value))); ivSimSave(); clearTimeout(IVEL._t); IVEL._t = setTimeout(renderItems, 350); } });
 IVEL.addEventListener("change", e => { const t = e.target;
-  if (t.id === "iv-simon") { IVSIM.on = t.checked; ivSimSave(); }
+  if (t.name === "ivx-scope") { IV.xscope = t.value; if (t.value === "pick" && !IV.xsel) IV.xsel = new Set(); }
+  else if (t.dataset.ivxf) { IV.xsel ||= new Set(); t.checked ? IV.xsel.add(t.dataset.ivxf) : IV.xsel.delete(t.dataset.ivxf); }
+  else if (t.id === "iv-simon") { IVSIM.on = t.checked; ivSimSave(); }
   else if (t.id === "iv-simn" || t.id === "iv-simk") return;
   else if (t.id === "iv-folder") IV.folder = t.value; else if (t.id === "iv-type") IV.type = t.value; else if (t.id === "iv-grade") IV.grade = t.value;
   else if (t.id === "iv-sort") IV.sort = t.value; else if (t.id === "iv-cat") IV.cat = t.value; else if (t.id === "iv-btype") IV.btype = t.value; else if (t.id === "iv-from") IV.from = t.value; else if (t.id === "iv-to") IV.to = t.value;
@@ -3993,9 +4008,9 @@ function loadXLSXStyle(){
     sc.src = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js";
     sc.onload = () => window.XLSX && window.XLSX.utils ? ok(window.XLSX) : bad(); sc.onerror = () => { xlsxStyleLib = null; bad(); }; document.head.append(sc); });
 }
-async function exportItems(kind = "count"){
+async function exportItems(kind = "count", only = null){
   let X; try { X = await loadXLSXStyle(); } catch { try { X = await loadXLSX(); } catch { toast("โหลดตัวสร้างไฟล์ Excel ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่"); return; } }
-  const D = itemsData(), full = kind === "full", rate = n(S.settings.rate) || 2;
+  const D = itemsData(only), full = kind === "full", rate = n(S.settings.rate) || 2;
   const mode = { promo:"รายโปรโมชัน", week:"รายสัปดาห์", month:"รายเดือน" }[IV.mode], met = { offer:"วางขายต่อครั้ง", max:"สูงสุดต่อ ID", sold:"ขายจริง" }[IV.metric];
   const anySim = D.entries.some(e => e.src === "sim"), stamp = new Date().toLocaleString("th-TH-u-ca-gregory", { dateStyle:"medium", timeStyle:"short" });
   const F = { sim:{ fill:{ patternType:"solid", fgColor:{ rgb:"FFF2B3" } }, font:{ italic:true } }, head:{ font:{ bold:true, color:{ rgb:"FFFFFF" } }, fill:{ patternType:"solid", fgColor:{ rgb:"1D3A5C" } }, alignment:{ wrapText:true, vertical:"center" } },
@@ -4051,7 +4066,7 @@ async function exportItems(kind = "count"){
         ["", "ตัวเลขจำลองคือค่าเฉลี่ยตามเรท (ค่าที่การสุ่มจำนวนมากจะได้ใกล้เคียง) · ในไฟล์มีพื้นเหลือง ตัวเอียง และ ~ นำหน้า"]] : []),
       ["≈ ราคาเฉลี่ยต่อชิ้น", "มูลค่าไอเทม 1 ชิ้น (TP × " + rate + " บาท) × ราคาแพ็ก ÷ มูลค่าแพ็ก = ราคาที่ผู้เล่นจ่ายต่อชิ้นหลังหักส่วนลดของแพ็ก · หน่วยเดียวกับราคาแพ็ก"],
       ["", "แพ็กสุ่มใช้มูลค่าเฉลี่ย (EV) · ไอเทมที่ไม่มี TP จะว่าง"],
-      ["ตัวกรองที่ใช้", [IV.folder && `โปร: ${S.folders.find(f => f.id === IV.folder)?.name}`, IV.cat && `หมวด: ${catLabel(IV.cat)}`, IV.btype && `แบบ: ${IV.btype}`, IV.type && `ประเภท: ${IV.type}`, IV.grade && `เกรด: ${IV.grade}`, IV.q && `ค้นหา: ${IV.q}`, IV.range !== "all" && `ช่วง: ${IV.range === "custom" ? IV.from + " – " + IV.to : IV.range}`].filter(Boolean).join(" · ") || "ไม่มี"],
+      ["ตัวกรองที่ใช้", [IV.folder && `โปร: ${S.folders.find(f => f.id === IV.folder)?.name}`, only && `เฉพาะโฟลเดอร์: ${S.folders.filter(f => only.has(f.id)).map(f => f.name).join(", ")}`, IV.cat && `หมวด: ${catLabel(IV.cat)}`, IV.btype && `แบบ: ${IV.btype}`, IV.type && `ประเภท: ${IV.type}`, IV.grade && `เกรด: ${IV.grade}`, IV.q && `ค้นหา: ${IV.q}`, IV.range !== "all" && `ช่วง: ${IV.range === "custom" ? IV.from + " – " + IV.to : IV.range}`].filter(Boolean).join(" · ") || "ไม่มี"],
       ["Export เมื่อ", stamp]];
     const ws = X.utils.aoa_to_sheet(how); ws["!cols"] = [{ wch:20 }, { wch:110 }]; if (ws.A1) ws.A1.s = F.title;
     X.utils.book_append_sheet(wb, ws, "วิธีคิด");
@@ -4059,7 +4074,7 @@ async function exportItems(kind = "count"){
   const buf = X.write(wb, { bookType:"xlsx", type:"array" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([buf], { type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-  a.download = `สรุปไอเทม - ${mode} - ${met}${full ? " - ละเอียด" : ""}${anySim ? " (มีจำลอง)" : ""}.xlsx`.replace(/[\\/:*?"<>|]/g, "_");
+  a.download = `สรุปไอเทม - ${only && only.size === 1 ? S.folders.find(f => only.has(f.id))?.name + " - " : ""}${mode} - ${met}${full ? " - ละเอียด" : ""}${anySim ? " (มีจำลอง)" : ""}.xlsx`.replace(/[\\/:*?"<>|]/g, "_");
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   toast(`Export สรุปไอเทม${full ? " แบบละเอียด" : ""}แล้ว`);
 }
