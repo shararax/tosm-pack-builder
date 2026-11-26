@@ -900,7 +900,9 @@ td .cell.v-err{background:var(--bad-soft)}
 .iv-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);max-height:calc(100vh - 300px)}
 .iv-t{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 .iv-t th{position:sticky;top:0;z-index:2;background:var(--navy);color:var(--navy-ink);font:600 12px var(--f-body);padding:8px 10px;white-space:nowrap}
-.iv-t th.iv-item,.iv-t td.iv-item{position:sticky;left:0;z-index:1;min-width:240px}
+.iv-t th.iv-item,.iv-t td.iv-item{position:sticky;left:0;z-index:1;min-width:260px;max-width:260px;width:260px}
+.iv-t th.tot,.iv-t td.tot{position:sticky;left:260px;z-index:1;border-right:2px solid var(--line);box-shadow:4px 0 6px -4px rgba(0,0,0,.25)}
+.iv-t th.tot{z-index:3}.iv-t th.iv-item{z-index:3}
 .iv-t th.iv-item{z-index:3}
 .iv-t td{padding:7px 10px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap}
 .iv-t td.iv-item{white-space:normal}
@@ -3830,12 +3832,12 @@ function renderItems(){
     ${soldMissing && !IVSIM.on ? `<p class="iv-note warn">${soldMissing} แพ็กยังไม่ได้กรอกยอดขายจริง จึงยังไม่ถูกนับ · กด “กรอกยอดขายจริง”</p>` : ""}
     ${D.undated ? `<p class="iv-note">${D.undated} แพ็กยังไม่มีวันขาย จึงไม่อยู่ในมุมมองรายสัปดาห์ / รายเดือน</p>` : ""}
     ${D.list.length ? `<div class="iv-wrap"><table class="iv-t">
-      <thead><tr><th class="iv-item">ไอเทม</th>${D.cols.map(c => `<th class="r">${esc(c.label)}</th>`).join("")}<th class="r tot">รวม</th><th>ขายช่วง</th></tr></thead>
+      <thead><tr><th class="iv-item">ไอเทม</th><th class="r tot">รวม</th>${D.cols.map(c => `<th class="r">${esc(c.label)}</th>`).join("")}<th>ขายช่วง</th></tr></thead>
       <tbody>${D.list.map(r => { const open = IV.open.has(r.k), nPromo = new Set(r.packs.map(p => p.f.id)).size;
         return `<tr class="iv-row${open ? " open" : ""}" data-ivrow="${esc(r.k)}" tabindex="0" aria-expanded="${open}">
           <td class="iv-item"><span class="iv-nm">${icon(r.m?.img, r.m?.grade, r.x.name, "ico sm")}<span><b>${esc(r.x.name || "(ไม่มีชื่อ)")}</b><small>${esc(r.x.itemId || "นอกลิสต์")} · ${r.packs.length} แพ็ก · ${nPromo} โปร${r.rand ? " · มีสุ่ม" : ""}</small></span></span></td>
-          ${D.cols.map(c => cell(r, c)).join("")}
           <td class="r num tot${r.simTotal > 0 ? " sim" : ""}">${r.none && !r.inf ? `<span class="dash">–</span>` : (r.simTotal > 0 ? "~" : r.rand ? "≈" : "") + ifmt(r.total) + (r.inf ? `<span class="inf"> +∞</span>` : "")}</td>
+          ${D.cols.map(c => cell(r, c)).join("")}
           <td class="iv-when">${r.first ? `${thShort(r.first)} – ${thShort(r.last)}` : "ไม่มีวันขาย"}</td></tr>
           ${open ? `<tr class="iv-det"><td colspan="${D.cols.length + 3}">${detailHTML(r, D)}</td></tr>` : ""}`; }).join("")}</tbody></table></div>
       <p class="iv-note">≈ = ค่าเฉลี่ยจากเรทสุ่ม · ∞ = มีแพ็กที่ซื้อได้ไม่จำกัด · ${D.entries.some(e => e.src === "sim") ? `<span class="simk">~ พื้นเหลือง</span> = มีส่วนที่จำลอง (${simTxt(IV.metric)}) ไม่ใช่ยอดจริง · ` : ""}${IV.mode === "promo" ? "นับตามโปรโมชันที่แพ็กอยู่" : IV.metric === "sold" ? "ยอดขายจริงแบ่งตามจำนวนวันที่แพ็กขายในแต่ละช่วง" : "แพ็กที่ขายคร่อมหลายช่วง นับเต็มในทุกช่วงที่ขายอยู่ · ช่องรวมนับแพ็กละครั้งเดียว"} · สัปดาห์เริ่มวันจันทร์</p>`
@@ -4027,6 +4029,7 @@ async function exportItems(kind = "count", only = null){
       if (typeof cell.v === "number") cell.z = c?.z || (c?.sim ? SIMNUM : NUM);
       if (c?.sim) cell.s = F.sim; else if (c?.s) cell.s = c.s; }));
     ws["!freeze"] = { xSplit:0, ySplit:intro.length + 1 };
+    ws["!views"] = [{ state:"frozen", xSplit:widths.length > 3 && head[2] === "รวม" ? 3 : 0, ySplit:intro.length + 1 }];
     return ws;
   };
   const r2 = v => Math.round(v * 100) / 100;
@@ -4035,10 +4038,10 @@ async function exportItems(kind = "count", only = null){
   const intro = [[{ v:`สรุปไอเทม · ${mode} · ${METRIC_TXT[IV.metric]}`, s:F.title }], [{ v:`Export ${stamp}`, s:F.muted }]];
   if (anySim) intro.push([{ v:`ตัวเลขพื้นเหลือง / มี ~ นำหน้า = การจำลอง (${simTxt(IV.metric)} · ค่าเฉลี่ยตามเรท) ไม่ใช่ยอดขายจริง`, s:F.note }]);
   intro.push([]);
-  const head = ["Item ID", "ไอเทม", "จำนวนแพ็ก", "มีสุ่ม", ...D.cols.map(c => c.label), "รวม", "ที่มาของตัวเลข", "ขายช่วงแรก", "ขายช่วงสุดท้าย"];
-  const rows = D.list.map(r => [r.x.itemId || "", r.x.name || "", r.packs.length, r.rand ? "ใช่" : "",
+  const head = ["Item ID", "ไอเทม", "รวม", "ที่มาของตัวเลข", "จำนวนแพ็ก", "มีสุ่ม", ...D.cols.map(c => c.label), "ขายช่วงแรก", "ขายช่วงสุดท้าย"];
+  const rows = D.list.map(r => [r.x.itemId || "", r.x.name || "", r.inf ? "ไม่จำกัด" : { v:r2(r.total), sim:r.simTotal > 0 }, srcTxt(r), r.packs.length, r.rand ? "ใช่" : "",
     ...D.cols.map(c => r.cells.has(c.key + ":inf") ? "ไม่จำกัด" : { v:r2(r.cells.get(c.key) || 0), sim:(r.simc.get(c.key) || 0) > 0 }),
-    r.inf ? "ไม่จำกัด" : { v:r2(r.total), sim:r.simTotal > 0 }, srcTxt(r), r.first ? ymd(r.first) : "", r.last ? ymd(r.last) : ""]);
+    r.first ? ymd(r.first) : "", r.last ? ymd(r.last) : ""]);
   const wb = X.utils.book_new();
   X.utils.book_append_sheet(wb, sheet(intro, head, rows, head.map((h, i) => i === 1 ? 34 : i === 0 ? 12 : h === "ที่มาของตัวเลข" ? 20 : 14)), "สรุปไอเทม");
   if (full) {
