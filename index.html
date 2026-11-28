@@ -949,7 +949,9 @@ td .cell.v-err{background:var(--bad-soft)}
 .sm-wrap{display:flex;flex-direction:column;gap:10px}
 .sm-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
 .sm-bar p{margin:0;font-size:13px;color:#5b5e66}
-.sm-scroll{overflow-x:auto;border-radius:8px}
+.sm-scroll{overflow:auto;border-radius:8px;overscroll-behavior:contain}
+.sm-t thead th{position:sticky;top:0;z-index:2}
+.sm-t tfoot td{position:sticky;bottom:0;z-index:2;box-shadow:0 -1px 0 #f3e2b4}
 .sm-t{width:100%;border-collapse:collapse;font:14px "Kanit",var(--f-body);color:#2a2a2a;min-width:720px}
 .sm-t th{background:#c9971f;color:#fff;font-weight:600;padding:7px 10px;text-align:center;white-space:nowrap}
 .sm-t th.l{text-align:left}
@@ -986,7 +988,7 @@ td .cell.v-err{background:var(--bad-soft)}
 .sv-seg:focus-visible{outline:3px solid #ffd266;outline-offset:2px}
 .sv-hint{margin:10px 0 0;font-size:13px;color:#e6dcff}
 .sv-hint b{color:#fff;font-weight:600}
-.sv-list{margin-top:6px}
+.sv-list{margin-top:6px;overflow:auto;overscroll-behavior:contain;padding-right:6px;border-top:1px solid #ece6f6}
 .sv-pack{display:grid;grid-template-columns:76px minmax(0,1fr) 210px;gap:18px;align-items:start;padding:18px 6px 18px 0;border-bottom:1px solid #ece6f6;scroll-margin:80px}
 .sv-pack:last-child{border-bottom:0}
 .sv-pack.on{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 10%,#fff),#fff 60%);border-radius:12px}
@@ -3041,6 +3043,7 @@ function renderPresent(){
   const list = vis.map((p, i) => ({ p, i })).filter(o => PV.cat === "All" || catOf(o.p) === PV.cat)
     .sort((a, b) => (n(b.p.pos) - n(a.p.pos)) || (a.i - b.i)).map(o => o.p);
   const card = p => shopCard(p, PV.team);
+  const keep = [...document.querySelectorAll("#view-present .sm-scroll, #view-present .sv-list")].map(e => [e.className, e.scrollTop]);
   $("#view-present").innerHTML = `<div class="shop">
     <div class="sh-top">
       <h1>${esc(S.project)}<span class="sub">${vis.length} แพ็ก${nHid ? ` (ซ่อนไว้ ${nHid})` : ""} · ตัวอย่างหน้าร้าน (ยังไม่เปิดขายจริง)</span></h1>
@@ -3057,7 +3060,16 @@ function renderPresent(){
     </div>
     ${PV.open ? modalHTML(S.packs.find(p => p.id === PV.open)) : ""}
   </div>`;
+  fitSummary(); keep.forEach(([c, t]) => { const e = document.querySelector(`#view-present .${c.split(" ")[0]}`); if (e) e.scrollTop = t; });
 }
+/* สรุป tab: only the pack list (overview) or the table rows (Sheet view) scroll; the headline and the column header stay in view.
+   the scroll box reaches down to the bottom of the window */
+function fitSummary(){
+  const el = document.querySelector("#view-present .sm-scroll, #view-present .sv-list"); if (!el) return;
+  const top = el.getBoundingClientRect().top + window.scrollY;
+  el.style.maxHeight = Math.max(320, window.innerHeight - top - 28) + "px";
+}
+addEventListener("resize", () => { if (!$("#view-present").hidden) fitSummary(); });
 
 /* team summary: every pack in display order — items, price, limit, how much one ID gets and pays if it buys the full limit */
 function summaryRows(){
